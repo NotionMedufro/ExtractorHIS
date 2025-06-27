@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor de Laboratorio HIS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🩺 Extractor de Valores de Laboratorio HIS</h1>
+                <p class="subtitle">Herramienta diseñada para extraer de manera automática datos concretos de los exámenes de HIS. En lugar de interpretar el contenido, emplea únicamente operaciones de recorte y reordenamiento de texto basadas en expresiones regulares, sin almacenar ni conservar historial de información privada.</p>
+                <div class="warning-box">
+                    <p class="warning-text">Esta herramienta no sustituye la revisión completa y crítica de los informes: debe utilizarse siempre tras la lectura detallada de los exámenes, con el fin de agilizar la extracción manual de datos y estandarizar su presentación.</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="two-column-layout">
+                <!-- Columna Izquierda: Controles -->
+                <div class="left-column">
+                    <div class="step-card">
+                        <h2>📋 Parámetros a extraer</h2>
+                        
+                        <div class="selection-grid-compact">
+                            <label class="selection-item-compact">
+                                <input type="checkbox" value="Hemograma" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Hemograma</span>
+                            </label>
+                            
+                            <label class="selection-item-compact">
+                                <input type="checkbox" value="Renal" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Renal</span>
+                            </label>
+                            
+                            <label class="selection-item-compact">
+                                <input type="checkbox" value="Hepático" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Hepático</span>
+                            </label>
+                            
+                            <label class="selection-item-compact">
+                                <input type="checkbox" value="Coagulación" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Coagulación</span>
+                            </label>
+                            
+                            <label class="selection-item-compact">
+                                <input type="checkbox" value="Nutricional" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Nutricional</span>
+                            </label>
+                            
+                            <label class="selection-item-compact">
+                                <input type="checkbox" value="Fecha" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Fecha</span>
+                            </label>
+                        </div>
+                        
+                        <div class="utility-buttons">
+                            <button id="selectAllBtn" class="utility-button">Seleccionar todo</button>
+                            <button id="clearAllBtn" class="utility-button">Borrar todo</button>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <h2>📄 Texto del Examen</h2>
+                        <div class="input-group">
+                            <textarea id="copyPasteText" 
+                                    placeholder="1. En la página pdf del examen presiona: Ctrl + A para seleccionar todo el texto
+2. Copia el texto mediante: Ctrl + C
+3. Pega el texto aquí mediante: Ctrl + V"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Resultados -->
+                <div class="right-column">
+                    <div class="step-card results-card">
+                        <h2>📊 Resultado Extraído</h2>
+                        <div class="results-status" id="resultsStatus">
+                            <p class="status-text">Selecciona parámetros y pega el texto para ver los resultados automáticamente</p>
+                        </div>
+                        <div id="results" class="results-content"></div>
+                        <div class="copy-area" id="copyArea" style="display: none;">
+                            <button id="copyBtn" class="copy-button">
+                                <span class="copy-icon">📋</span>
+                                <span class="copy-text">Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="notification" class="notification"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
