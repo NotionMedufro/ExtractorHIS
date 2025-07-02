@@ -192,6 +192,22 @@ class MedicalDataExtractor {
             values.push(`ELP: ${naNumber}/${kNumber}/${clNumber}`);
         }
 
+        // Fósforo
+        const pMatch = this.extractMatch(this.copyPasteText, /Fósforo[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
+        if (pMatch) {
+            const pValue = this.extractMatch(pMatch, /(\d+\.?\d*)\s+mg\/dL/);
+            const pNumber = this.extractMatch(pValue, /\d+\.?\d*/);
+            values.push(`P: ${pNumber}`);
+        }
+
+        // Calcio
+        const caMatch = this.extractMatch(this.copyPasteText, /Calcio[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
+        if (caMatch) {
+            const caValue = this.extractMatch(caMatch, /(\d+\.?\d*)\s+mg\/dL/);
+            const caNumber = this.extractMatch(caValue, /\d+\.?\d*/);
+            values.push(`Ca: ${caNumber}`);
+        }
+
         const result = values.length > 0 ? values.join(', ') + ', ' : '';
         return this.cleanAsterisks(result);
     }
