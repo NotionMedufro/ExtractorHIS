@@ -545,22 +545,54 @@ class MedicalDataExtractor {
         
         examenes.forEach(examen => {
             const fechaCompleta = this.extractFechaCompleta(examen);
-            const resultado = this.processSingleExamen(examen, selectedOptions, false); // No incluir fecha en resultado individual
             
-            if (fechaCompleta && resultado.trim()) {
+            if (fechaCompleta) {
                 const fechaCorta = fechaCompleta.substring(0, 5); // dd/mm
                 
                 if (!resultadosPorFecha.has(fechaCorta)) {
                     resultadosPorFecha.set(fechaCorta, {
                         fechaObj: this.parseFecha(fechaCompleta),
-                        resultados: []
+                        hemograma: '',
+                        renal: '',
+                        hepatico: '',
+                        coagulacion: '',
+                        nutricional: '',
+                        gases: ''
                     });
                 }
                 
-                // Agregar solo si tiene contenido útil
-                const contenido = resultado.trim();
-                if (contenido) {
-                    resultadosPorFecha.get(fechaCorta).resultados.push(contenido);
+                // Procesar cada sección individualmente
+                this.copyPasteText = examen;
+                const data = resultadosPorFecha.get(fechaCorta);
+                
+                if (selectedOptions.includes('Hemograma')) {
+                    const hemo = this.extractHemograma();
+                    if (hemo) data.hemograma = hemo;
+                }
+                
+                if (selectedOptions.includes('Renal')) {
+                    const renal = this.extractRenal();
+                    if (renal) data.renal = renal;
+                }
+                
+                if (selectedOptions.includes('Hepático')) {
+                    const hepatico = this.extractHepatico();
+                    if (hepatico) data.hepatico = hepatico;
+                }
+                
+                if (selectedOptions.includes('Coagulación')) {
+                    const coag = this.extractCoagulacion();
+                    if (coag) data.coagulacion = coag;
+                }
+                
+                if (selectedOptions.includes('Nutricional')) {
+                    const nutri = this.extractNutricional();
+                    if (nutri) data.nutricional = nutri;
+                }
+                
+                if (selectedOptions.includes('Gases')) {
+                    const gases = this.extractGases();
+                    if (gases) data.gases = gases;
                 }
             }
         });
@@ -571,20 +603,24 @@ class MedicalDataExtractor {
         
         // Construir resultado final
         const resultadosFinales = fechasOrdenadas.map(([fechaCorta, data]) => {
-            // Combinar todos los resultados de la misma fecha
-            const todosLosResultados = data.resultados.join(' ').trim();
+            const secciones = [];
             
-            // Limpiar espacios extra y comas duplicadas
-            const resultadoLimpio = todosLosResultados
-                .replace(/\s+/g, ' ')  // Múltiples espacios a uno solo
-                .replace(/,\s*,/g, ',') // Comas duplicadas
-                .replace(/,\s*$/g, '') // Coma final
-                .trim();
+            if (data.hemograma) secciones.push(data.hemograma);
+            if (data.renal) secciones.push(data.renal);
+            if (data.hepatico) secciones.push(data.hepatico);
+            if (data.coagulacion) secciones.push(data.coagulacion);
+            if (data.nutricional) secciones.push(data.nutricional);
+            if (data.gases) secciones.push(data.gases);
             
-            if (resultadoLimpio) {
+            const contenidoCompleto = secciones.join('').trim();
+            
+            if (contenidoCompleto) {
+                // Limpiar comas extra al final
+                const contenidoLimpio = contenidoCompleto.replace(/,\s*$/, '');
+                
                 return selectedOptions.includes('Fecha') 
-                    ? `${fechaCorta}:\n${resultadoLimpio}` 
-                    : resultadoLimpio;
+                    ? `${fechaCorta}:\n${contenidoLimpio}` 
+                    : contenidoLimpio;
             }
             return '';
         }).filter(resultado => resultado); // Filtrar resultados vacíos
