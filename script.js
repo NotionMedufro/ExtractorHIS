@@ -1405,6 +1405,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Frases aleatorias para el footer
+    const footerPhrases = [
+        "Así como que rápido no sé...",
+        "Solo las pulgas están incorporadas",
+        "I'm not a very good dogtor, but I can",
+        "Quejas y amenazas a a.vasquez080@ufromail.cl",
+        "No estoi ni ahi con anotar Toxo",
+        "Me llamo... el Marto",
+        "Ánimo, tenedor, cuchillo",
+        "Dr. Sáez"
+    ];
+    
+    const footerIcon = document.getElementById('footerIcon');
+    if (footerIcon) {
+        footerIcon.addEventListener('mouseenter', () => {
+            const randomIndex = Math.floor(Math.random() * footerPhrases.length);
+            const randomPhrase = footerPhrases[randomIndex];
+            footerIcon.setAttribute('title', randomPhrase);
+        });
+    }
+    
 });
 
 // Función para crear enlace online usando servicios de hosting temporal
