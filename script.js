@@ -156,14 +156,14 @@ class MedicalDataExtractor {
     extractRenal() {
         if (!this.copyPasteText) return '';
 
-        let result = '';
+        let values = [];
 
         // Creatinina
         const creaMatch = this.extractMatch(this.copyPasteText, /Creatinina[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
         if (creaMatch) {
             const creaValue = this.extractMatch(creaMatch, /(\d+\.?\d*)\s+mg\/dL/);
             const creaNumber = this.extractMatch(creaValue, /\d+\.?\d*/);
-            result += `Crea: ${creaNumber}, `;
+            values.push(`Crea: ${creaNumber}`);
         }
 
         // BUN (Nitrógeno Ureico)
@@ -171,33 +171,28 @@ class MedicalDataExtractor {
         if (bunMatch) {
             const bunValue = this.extractMatch(bunMatch, /(\d+\.?\d*)\s+mg/);
             const bunNumber = this.extractMatch(bunValue, /\d+\.?\d*/);
-            result += `BUN: ${bunNumber}, `;
+            values.push(`BUN: ${bunNumber}`);
         }
 
-        // Sodio
+        // ELP: Sodio/Potasio/Cloro
         const naMatch = this.extractMatch(this.copyPasteText, /Sodio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        if (naMatch) {
+        const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
+        const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
+        
+        if (naMatch && kMatch && clMatch) {
             const naValue = this.extractMatch(naMatch, /(\d+\.?\d*)\s+mEq\/L/);
             const naNumber = this.extractMatch(naValue, /\d+\.?\d*/);
-            result += `Na: ${naNumber}, `;
-        }
-
-        // Potasio
-        const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        if (kMatch) {
+            
             const kValue = this.extractMatch(kMatch, /(\d+\.?\d*)\s+mEq\/L/);
             const kNumber = this.extractMatch(kValue, /\d+\.?\d*/);
-            result += `K: ${kNumber}, `;
-        }
-
-        // Cloro
-        const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        if (clMatch) {
+            
             const clValue = this.extractMatch(clMatch, /(\d+\.?\d*)\s+mEq\/L/);
             const clNumber = this.extractMatch(clValue, /\d+\.?\d*/);
-            result += `Cl: ${clNumber}, `;
+            
+            values.push(`ELP: ${naNumber}/${kNumber}/${clNumber}`);
         }
 
+        const result = values.length > 0 ? values.join(', ') + ', ' : '';
         return this.cleanAsterisks(result);
     }
 

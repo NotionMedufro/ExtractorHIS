@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "CSS Modifier for 10.6.84.181",
+  "version": "1.0",
+  "description": "Modifica el CSS de la página http://10.6.84.181/",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://10.6.84.181/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://10.6.84.181/*"],
+      "css": ["styles.css"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CSS Modifier"
+  }
+}
