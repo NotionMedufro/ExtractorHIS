@@ -389,19 +389,102 @@ class MedicalDataExtractor {
         return '';
     }
 
-    // Función principal de procesamiento
-    processSelection(copyPasteText, selectedOptions) {
+    // Función para dividir el texto en múltiples exámenes
+    splitExamenes(text) {
+        // Dividir por patrones que indican inicio de nuevo examen
+        const examenes = [];
+        
+        // Buscar patrones que indican inicio de examen
+        const patterns = [
+            /Fecha \d{2}\/\d{2}\/\d{4}/g,
+            /F\. Registro: \d{2}\/\d{2}\/\d{4}/g,
+            /SERVICIO DE SALUD ARAUCANIA SUR(?=.*HOSPITAL)/g
+        ];
+        
+        // Encontrar todas las posiciones de inicio de examen
+        let splits = [];
+        patterns.forEach(pattern => {
+            let match;
+            const regex = new RegExp(pattern.source, 'g');
+            while ((match = regex.exec(text)) !== null) {
+                splits.push(match.index);
+            }
+        });
+        
+        // Ordenar posiciones y eliminar duplicados
+        splits = [...new Set(splits)].sort((a, b) => a - b);
+        
+        // Si no hay divisiones claras, tratar como un solo examen
+        if (splits.length <= 1) {
+            return [text];
+        }
+        
+        // Dividir el texto en fragmentos
+        for (let i = 0; i < splits.length; i++) {
+            const start = splits[i];
+            const end = splits[i + 1] || text.length;
+            const fragment = text.substring(start, end).trim();
+            if (fragment.length > 100) { // Solo incluir fragmentos significativos
+                examenes.push(fragment);
+            }
+        }
+        
+        return examenes.length > 0 ? examenes : [text];
+    }
+    
+    // Función para extraer fecha completa para ordenamiento
+    extractFechaCompleta(text) {
+        // Buscar varios patrones de fecha
+        let fechaMatch = null;
+        
+        // Patrón 1: "Fecha dd/mm/yyyy"
+        fechaMatch = this.extractMatch(text, /Fecha\s+(\d{2}\/\d{2}\/\d{4})/);
+        
+        // Patrón 2: "F. Registro: dd/mm/yyyy"
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(text, /F\. Registro:\s*(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
+        // Patrón 3: "Toma Muestra: dd/mm/yyyy"
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(text, /Toma Muestra:\s*(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
+        // Patrón 4: Cualquier fecha en formato dd/mm/yyyy
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(text, /(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
+        if (fechaMatch) {
+            const fechaCompleta = this.extractMatch(fechaMatch, /\d{2}\/\d{2}\/\d{4}/);
+            return fechaCompleta;
+        }
+        return null;
+    }
+    
+    // Función para convertir fecha dd/mm/yyyy a objeto Date para ordenamiento
+    parseFecha(fechaString) {
+        if (!fechaString) return new Date(0); // Fecha muy antigua si no hay fecha
+        
+        const parts = fechaString.split('/');
+        if (parts.length !== 3) return new Date(0);
+        
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; // Los meses en Date son 0-indexados
+        const year = parseInt(parts[2]);
+        
+        return new Date(year, month, day);
+    }
+    
+    // Función para procesar un solo examen
+    processSingleExamen(copyPasteText, selectedOptions, includeFecha = true) {
         this.copyPasteText = copyPasteText;
         this.selectedOptions = selectedOptions;
-
-        if (selectedOptions.includes('Talcual')) {
-            return copyPasteText;
-        }
 
         let results = [];
 
         // Agregar la fecha al principio si está seleccionada
-        if (selectedOptions.includes('Fecha')) {
+        if (selectedOptions.includes('Fecha') && includeFecha) {
             const fecha = this.extractFecha();
             if (fecha) results.push(fecha);
         }
@@ -437,6 +520,41 @@ class MedicalDataExtractor {
         }
 
         return results.join('\n');
+    }
+
+    // Función principal de procesamiento
+    processSelection(copyPasteText, selectedOptions) {
+        if (selectedOptions.includes('Talcual')) {
+            return copyPasteText;
+        }
+
+        // Dividir el texto en múltiples exámenes
+        const examenes = this.splitExamenes(copyPasteText);
+        
+        // Si solo hay un examen, procesarlo normalmente
+        if (examenes.length === 1) {
+            return this.processSingleExamen(copyPasteText, selectedOptions);
+        }
+        
+        // Procesar múltiples exámenes
+        const examenesConFecha = examenes.map(examen => {
+            const fechaCompleta = this.extractFechaCompleta(examen);
+            const resultado = this.processSingleExamen(examen, selectedOptions, selectedOptions.includes('Fecha'));
+            
+            return {
+                fecha: fechaCompleta,
+                fechaObj: this.parseFecha(fechaCompleta),
+                resultado: resultado.trim()
+            };
+        }).filter(examen => examen.resultado); // Solo incluir exámenes con resultados
+        
+        // Ordenar por fecha
+        examenesConFecha.sort((a, b) => a.fechaObj - b.fechaObj);
+        
+        // Combinar resultados
+        const resultadosFinales = examenesConFecha.map(examen => examen.resultado);
+        
+        return resultadosFinales.join('\n\n');
     }
 }
 
