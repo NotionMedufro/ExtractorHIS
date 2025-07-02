@@ -152,52 +152,52 @@ class MedicalDataExtractor {
         let values = [];
 
         // Creatinina
-        const creaMatch = this.extractMatch(this.copyPasteText, /Creatinina[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
+        const creaMatch = this.extractMatch(this.copyPasteText, /Creatinina[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (creaMatch) {
-            const creaValue = this.extractMatch(creaMatch, /(\d+\.?\d*)\s+mg\/dL/);
-            const creaNumber = this.extractMatch(creaValue, /\d+\.?\d*/);
+            const creaValue = this.extractMatch(creaMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            const creaNumber = this.extractMatch(creaValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             values.push(`Crea: ${creaNumber}`);
         }
 
         // BUN (Nitrógeno Ureico)
-        const bunMatch = this.extractMatch(this.copyPasteText, /Nitrógeno Ureico[\s\S]*?(\d+\.?\d*)\s+mg/);
+        const bunMatch = this.extractMatch(this.copyPasteText, /Nitrógeno Ureico[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg/);
         if (bunMatch) {
-            const bunValue = this.extractMatch(bunMatch, /(\d+\.?\d*)\s+mg/);
-            const bunNumber = this.extractMatch(bunValue, /\d+\.?\d*/);
+            const bunValue = this.extractMatch(bunMatch, /(\*?\s*\d+\.?\d*)\s+mg/);
+            const bunNumber = this.extractMatch(bunValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             values.push(`BUN: ${bunNumber}`);
         }
 
         // ELP: Sodio/Potasio/Cloro
-        const naMatch = this.extractMatch(this.copyPasteText, /Sodio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
+        const naMatch = this.extractMatch(this.copyPasteText, /Sodio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+        const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+        const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
         
         if (naMatch && kMatch && clMatch) {
-            const naValue = this.extractMatch(naMatch, /(\d+\.?\d*)\s+mEq\/L/);
-            const naNumber = this.extractMatch(naValue, /\d+\.?\d*/);
+            const naValue = this.extractMatch(naMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+            const naNumber = this.extractMatch(naValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             
-            const kValue = this.extractMatch(kMatch, /(\d+\.?\d*)\s+mEq\/L/);
-            const kNumber = this.extractMatch(kValue, /\d+\.?\d*/);
+            const kValue = this.extractMatch(kMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+            const kNumber = this.extractMatch(kValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             
-            const clValue = this.extractMatch(clMatch, /(\d+\.?\d*)\s+mEq\/L/);
-            const clNumber = this.extractMatch(clValue, /\d+\.?\d*/);
+            const clValue = this.extractMatch(clMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+            const clNumber = this.extractMatch(clValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             
             values.push(`ELP: ${naNumber}/${kNumber}/${clNumber}`);
         }
 
         // Fósforo
-        const pMatch = this.extractMatch(this.copyPasteText, /Fósforo[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
+        const pMatch = this.extractMatch(this.copyPasteText, /Fósforo[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (pMatch) {
-            const pValue = this.extractMatch(pMatch, /(\d+\.?\d*)\s+mg\/dL/);
-            const pNumber = this.extractMatch(pValue, /\d+\.?\d*/);
+            const pValue = this.extractMatch(pMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            const pNumber = this.extractMatch(pValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             values.push(`P: ${pNumber}`);
         }
 
         // Calcio
-        const caMatch = this.extractMatch(this.copyPasteText, /Calcio[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
+        const caMatch = this.extractMatch(this.copyPasteText, /Calcio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (caMatch) {
-            const caValue = this.extractMatch(caMatch, /(\d+\.?\d*)\s+mg\/dL/);
-            const caNumber = this.extractMatch(caValue, /\d+\.?\d*/);
+            const caValue = this.extractMatch(caMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            const caNumber = this.extractMatch(caValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             values.push(`Ca: ${caNumber}`);
         }
 
@@ -212,36 +212,44 @@ class MedicalDataExtractor {
         let result = '';
 
         // Bilirrubina Total/Directa
-        const biliTMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Total[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
-        const biliDMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Directa[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
+        const biliTMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Total[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        const biliDMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Directa[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         
         if (biliTMatch && biliDMatch) {
-            const biliTValue = this.extractMatch(biliTMatch, /\d+\.?\d*/);
-            const biliDValue = this.extractMatch(biliDMatch, /\d+\.?\d*/);
+            const biliTValue = this.extractMatch(biliTMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            const biliDValue = this.extractMatch(biliDMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             result += `BiliT/D: ${biliTValue}/${biliDValue}, `;
+        } else if (biliTMatch) {
+            // Solo Bilirrubina Total
+            const biliTValue = this.extractMatch(biliTMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            result += `BiliT: ${biliTValue}, `;
+        } else if (biliDMatch) {
+            // Solo Bilirrubina Directa
+            const biliDValue = this.extractMatch(biliDMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            result += `BiliD: ${biliDValue}, `;
         }
 
         // GOT/GPT (Transaminasas)
-        const gotMatch = this.extractMatch(this.copyPasteText, /Transaminasa GOT\/ASAT[\s\S]*?(\d+\.?\d*)\s+U\/L/);
-        const gptMatch = this.extractMatch(this.copyPasteText, /Transaminasa GPT\/\s?ALT[\s\S]*?(\d+\.?\d*)\s+U\/L/);
+        const gotMatch = this.extractMatch(this.copyPasteText, /Transaminasa GOT\/ASAT[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        const gptMatch = this.extractMatch(this.copyPasteText, /Transaminasa GPT\/\s?ALT[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
         
         if (gotMatch && gptMatch) {
-            const gotValue = this.extractMatch(gotMatch, /\d+\.?\d*/);
-            const gptValue = this.extractMatch(gptMatch, /\d+\.?\d*/);
+            const gotValue = this.extractMatch(gotMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            const gptValue = this.extractMatch(gptMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             result += `GOT/GPT: ${gotValue}/${gptValue}, `;
         }
 
         // Fosfatasa Alcalina
-        const faMatch = this.extractMatch(this.copyPasteText, /Fosfatasa Alcalina[\s\S]*?(\d+\.?\d*)\s+U\/L/);
+        const faMatch = this.extractMatch(this.copyPasteText, /Fosfatasa Alcalina[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
         if (faMatch) {
-            const faValue = this.extractMatch(faMatch, /\d+\.?\d*/);
+            const faValue = this.extractMatch(faMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             result += `FA: ${faValue}, `;
         }
 
         // GGT
-        const ggtMatch = this.extractMatch(this.copyPasteText, /Gamma Glutamiltranspeptidasa[\s\S]*?(\d+\.?\d*)\s+U\/L/);
+        const ggtMatch = this.extractMatch(this.copyPasteText, /Gamma Glutamiltranspeptidasa[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
         if (ggtMatch) {
-            const ggtValue = this.extractMatch(ggtMatch, /\d+\.?\d*/);
+            const ggtValue = this.extractMatch(ggtMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             result += `GGT: ${ggtValue}`;
         }
 
@@ -347,6 +355,251 @@ class MedicalDataExtractor {
 
         const result = values.length > 0 ? values.join(', ') + ', ' : '';
         return this.cleanAsterisks(result);
+    }
+
+    // Funciones de extracción detallada para tabla comparativa
+    
+    // Extracción detallada de Hemograma
+    extractHemogramaDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
+        // Hemoglobina
+        let hbMatch = this.copyPasteText.match(/Hemoglobina\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i);
+        if (hbMatch) {
+            const hasAsterisk = hbMatch[1] === '*';
+            valores.Hb = hasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
+        }
+        
+        // Glóbulos Blancos
+        let gbMatch = this.copyPasteText.match(/(?:Recuento de )?Leucocitos\s*\*?\s*(\d+\.?\d*)\s+10e3\/uL/i);
+        if (gbMatch) {
+            valores.GB = parseFloat(gbMatch[1]).toFixed(3);
+        }
+        
+        // % Neutrófilos
+        let neutMatch = this.copyPasteText.match(/Neutrófilos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
+        if (neutMatch) {
+            valores['N%'] = Math.round(parseFloat(neutMatch[1])) + '%';
+        }
+        
+        // Plaquetas
+        let plqMatch = this.copyPasteText.match(/(?:Recuento de )?Plaquetas\s*\*?\s*(\d+)\s+10e3\/uL/i);
+        if (plqMatch) {
+            valores.Plaq = plqMatch[1] + '.000';
+        }
+        
+        // PCR
+        let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
+        if (pcrMatch) {
+            valores.PCR = pcrMatch[1];
+        }
+        
+        return valores;
+    }
+    
+    // Extracción detallada de Función Renal
+    extractRenalDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
+        // Creatinina
+        const creaMatch = this.extractMatch(this.copyPasteText, /Creatinina[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (creaMatch) {
+            const creaValue = this.extractMatch(creaMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.Crea = this.extractMatch(creaValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // BUN
+        const bunMatch = this.extractMatch(this.copyPasteText, /Nitrógeno Ureico[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg/);
+        if (bunMatch) {
+            const bunValue = this.extractMatch(bunMatch, /(\*?\s*\d+\.?\d*)\s+mg/);
+            valores.BUN = this.extractMatch(bunValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Sodio
+        const naMatch = this.extractMatch(this.copyPasteText, /Sodio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+        if (naMatch) {
+            const naValue = this.extractMatch(naMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+            valores.Na = this.extractMatch(naValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Potasio
+        const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+        if (kMatch) {
+            const kValue = this.extractMatch(kMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+            valores.K = this.extractMatch(kValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Cloro
+        const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+        if (clMatch) {
+            const clValue = this.extractMatch(clMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
+            valores.Cl = this.extractMatch(clValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Fósforo
+        const pMatch = this.extractMatch(this.copyPasteText, /Fósforo[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (pMatch) {
+            const pValue = this.extractMatch(pMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.P = this.extractMatch(pValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Calcio
+        const caMatch = this.extractMatch(this.copyPasteText, /Calcio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (caMatch) {
+            const caValue = this.extractMatch(caMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.Ca = this.extractMatch(caValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        return valores;
+    }
+    
+    // Extracción detallada de Función Hepática
+    extractHepaticoDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
+        // Bilirrubina Total
+        const biliTMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Total[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (biliTMatch) {
+            const biliTValue = this.extractMatch(biliTMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.BiliT = this.extractMatch(biliTValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Bilirrubina Directa
+        const biliDMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Directa[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (biliDMatch) {
+            const biliDValue = this.extractMatch(biliDMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.BiliD = this.extractMatch(biliDValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // GOT
+        const gotMatch = this.extractMatch(this.copyPasteText, /Transaminasa GOT\/ASAT[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        if (gotMatch) {
+            const gotValue = this.extractMatch(gotMatch, /(\*?\s*\d+\.?\d*)\s+U\/L/);
+            valores.GOT = this.extractMatch(gotValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // GPT
+        const gptMatch = this.extractMatch(this.copyPasteText, /Transaminasa GPT\/\s?ALT[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        if (gptMatch) {
+            const gptValue = this.extractMatch(gptMatch, /(\*?\s*\d+\.?\d*)\s+U\/L/);
+            valores.GPT = this.extractMatch(gptValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Fosfatasa Alcalina
+        const faMatch = this.extractMatch(this.copyPasteText, /Fosfatasa Alcalina[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        if (faMatch) {
+            const faValue = this.extractMatch(faMatch, /(\*?\s*\d+\.?\d*)\s+U\/L/);
+            valores.FA = this.extractMatch(faValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // GGT
+        const ggtMatch = this.extractMatch(this.copyPasteText, /Gamma Glutamiltranspeptidasa[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        if (ggtMatch) {
+            const ggtValue = this.extractMatch(ggtMatch, /(\*?\s*\d+\.?\d*)\s+U\/L/);
+            valores.GGT = this.extractMatch(ggtValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        return valores;
+    }
+    
+    // Extracción detallada Nutricional
+    extractNutricionalDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
+        // Proteínas
+        const protMatch = this.extractMatch(this.copyPasteText, /Proteínas[\s\S]*?(\*?\s*\d+\.?\d*)\s+g\/dL/);
+        if (protMatch) {
+            const protValue = this.extractMatch(protMatch, /(\*?\s*\d+\.?\d*)\s+g\/dL/);
+            valores.Prot = this.extractMatch(protValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Albúmina
+        const albMatch = this.extractMatch(this.copyPasteText, /Albúmina[\s\S]*?(\*?\s*\d+\.?\d*)\s+g\/dL/);
+        if (albMatch) {
+            const albValue = this.extractMatch(albMatch, /(\*?\s*\d+\.?\d*)\s+g\/dL/);
+            valores.Alb = this.extractMatch(albValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Prealbúmina
+        const prealbMatch = this.extractMatch(this.copyPasteText, /Prealbúmina[\s\S]*?(\*?\s*\d+\.?\d*)/);
+        if (prealbMatch) {
+            valores.Prealb = this.extractMatch(prealbMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        return valores;
+    }
+    
+    // Extracción detallada de Coagulación
+    extractCoagulacionDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
+        // INR
+        const inrMatch = this.extractMatch(this.copyPasteText, /INR[\s\S]{0,20}(\*?\s*\d+\.?\d*)/);
+        if (inrMatch) {
+            valores.INR = this.extractMatch(inrMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // PT
+        const ptMatch = this.extractMatch(this.copyPasteText, /Tiempo de Protrombina[\s\S]*?(\*?\s*\d+\.?\d*)\s+seg/);
+        if (ptMatch) {
+            const ptValue = this.extractMatch(ptMatch, /(\*?\s*\d+\.?\d*)\s+seg/);
+            valores.PT = this.extractMatch(ptValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // PTT
+        const pttMatch = this.extractMatch(this.copyPasteText, /TTPA[\s\S]*?(\*?\s*\d+\.?\d*)\s+seg/);
+        if (pttMatch) {
+            const pttValue = this.extractMatch(pttMatch, /(\*?\s*\d+\.?\d*)\s+seg/);
+            valores.PTT = this.extractMatch(pttValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        return valores;
+    }
+    
+    // Extracción detallada de Gases
+    extractGasesDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
+        // pH
+        const phMatch = this.extractMatch(this.copyPasteText, /pH[\s\S]*?(\*?\s*\d+\.?\d*)/);
+        if (phMatch) {
+            valores.pH = this.extractMatch(phMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // PCO2
+        const pco2Match = this.extractMatch(this.copyPasteText, /PCO2[\s\S]*?(\*?\s*\d+\.?\d*)\s+mmHg/);
+        if (pco2Match) {
+            const pco2Value = this.extractMatch(pco2Match, /(\*?\s*\d+\.?\d*)\s+mmHg/);
+            valores.pCO2 = this.extractMatch(pco2Value, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // HCO3
+        const hco3Match = this.extractMatch(this.copyPasteText, /HCO3[\s\S]*?(\*?\s*\d+\.?\d*)\s+mmol\/L/);
+        if (hco3Match) {
+            const hco3Value = this.extractMatch(hco3Match, /(\*?\s*\d+\.?\d*)\s+mmol\/L/);
+            valores.HCO3 = this.extractMatch(hco3Value, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Saturación O2
+        const satO2Match = this.extractMatch(this.copyPasteText, /%\s+Saturación\s+O2[\s\S]*?(\*?\s*\d+\.?\d*)\s+%/);
+        if (satO2Match) {
+            const satO2Value = this.extractMatch(satO2Match, /(\*?\s*\d+\.?\d*)\s+%/);
+            valores.SatO2 = this.extractMatch(satO2Value, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        return valores;
     }
 
     // Extracción de Fecha
@@ -694,7 +947,90 @@ class MedicalDataExtractor {
             }
         });
         
-        // Procesar cada fecha consolidando todos sus fragmentos
+        // Preparar almacenamiento para resultados de tabla comparativa con exámenes específicos
+        const mapResultadosPorExamen = new Map();
+
+        // Definir exámenes específicos por parámetro
+        const EXAMENES_ESPECIFICOS = {
+            'Hemograma': ['Hb', 'GB', 'N%', 'Plaq', 'PCR'],
+            'Renal': ['Crea', 'BUN', 'Na', 'K', 'Cl', 'P', 'Ca'],
+            'Hepático': ['BiliT', 'BiliD', 'GOT', 'GPT', 'FA', 'GGT'],
+            'Nutricional': ['Prot', 'Alb', 'Prealb'],
+            'Coagulación': ['INR', 'PT', 'PTT'],
+            'Gases': ['pH', 'pCO2', 'HCO3', 'SatO2']
+        };
+
+        // Inicializar mapa para cada examen específico
+        Object.keys(EXAMENES_ESPECIFICOS).forEach(parametro => {
+            if (selectedOptions.includes(parametro)) {
+                EXAMENES_ESPECIFICOS[parametro].forEach(examen => {
+                    mapResultadosPorExamen.set(examen, new Map());
+                });
+            }
+        });
+
+        // Procesar cada fecha consolidando fragmentos
+        fragmentosPorFecha.forEach((fragmentos, fechaExtraida) => {
+            const textoCompleto = fragmentos.join('\n');
+            this.copyPasteText = textoCompleto;
+
+            // Extraer valores específicos por cada tipo de examen
+            if (selectedOptions.includes('Hemograma')) {
+                const valoresHemo = this.extractHemogramaDetallado();
+                Object.keys(valoresHemo).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresHemo[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresHemo[examen]);
+                    }
+                });
+            }
+            
+            if (selectedOptions.includes('Renal')) {
+                const valoresRenal = this.extractRenalDetallado();
+                Object.keys(valoresRenal).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresRenal[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresRenal[examen]);
+                    }
+                });
+            }
+            
+            if (selectedOptions.includes('Hepático')) {
+                const valoresHepatico = this.extractHepaticoDetallado();
+                Object.keys(valoresHepatico).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresHepatico[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresHepatico[examen]);
+                    }
+                });
+            }
+            
+            if (selectedOptions.includes('Nutricional')) {
+                const valoresNutri = this.extractNutricionalDetallado();
+                Object.keys(valoresNutri).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresNutri[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresNutri[examen]);
+                    }
+                });
+            }
+            
+            if (selectedOptions.includes('Coagulación')) {
+                const valoresCoag = this.extractCoagulacionDetallado();
+                Object.keys(valoresCoag).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresCoag[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresCoag[examen]);
+                    }
+                });
+            }
+            
+            if (selectedOptions.includes('Gases')) {
+                const valoresGases = this.extractGasesDetallado();
+                Object.keys(valoresGases).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresGases[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresGases[examen]);
+                    }
+                });
+            }
+        });
+
+        // Construir resultadosPorFecha para la vista de lista (compatibilidad)
         fragmentosPorFecha.forEach((fragmentos, fechaExtraida) => {
             // Unir todos los fragmentos de esta fecha
             const textoCompleto = fragmentos.join('\n\n');
@@ -755,6 +1091,40 @@ class MedicalDataExtractor {
                 resultadosPorFecha.set(fechaExtraida, contenidoCompleto);
             }
         });
+
+        // Generar HTML de la tabla comparativa
+        const generarTablaComparativa = () => {
+            const fechas = Array.from(fragmentosPorFecha.keys()).sort(); // Ordenar fechas
+            
+            if (fechas.length === 0 || mapResultadosPorExamen.size === 0) {
+                return '<p class="status-text">No hay datos suficientes para generar la tabla comparativa.</p>';
+            }
+            
+            const tablaHTML = [`<table class="comparative-table">`];
+            tablaHTML.push(`<thead><tr><th>Parámetro</th>` + fechas.map(fecha => `<th>${fecha}</th>`).join('') + `</tr></thead>`);
+            tablaHTML.push('<tbody>');
+
+            mapResultadosPorExamen.forEach((fechaMap, examen) => {
+                tablaHTML.push(`<tr><td>${examen}</td>`);
+                fechas.forEach(fecha => {
+                    const valor = fechaMap.get(fecha) || '-';
+                    tablaHTML.push(`<td>${valor}</td>`);
+                });
+                tablaHTML.push('</tr>');
+            });
+
+            tablaHTML.push('</tbody></table>');
+            return tablaHTML.join('\n');
+        };
+
+        // Actualizar contenido de la tabla comparativa
+        const tablaComparativaContainer = document.querySelector('#tab-tabla .comparative-table-container');
+        if (tablaComparativaContainer) {
+            tablaComparativaContainer.innerHTML = generarTablaComparativa();
+            tablaComparativaContainer.style.display = 'block';
+            tablaComparativaContainer.style.textAlign = 'left';
+            tablaComparativaContainer.style.alignItems = 'flex-start';
+        }
         
         // Convertir a array y ordenar por fecha
         const fechasOrdenadas = Array.from(resultadosPorFecha.entries())
@@ -953,6 +1323,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
             }
         }
+    });
+    
+    // Funcionalidad de pestañas
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remover clase active de todos los botones y contenidos
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Agregar clase active al botón clickeado y su contenido correspondiente
+            this.classList.add('active');
+            document.getElementById(`tab-${targetTab}`).classList.add('active');
+        });
     });
     
     // Ejecutar autoExtract inicial para mostrar el estado por defecto

@@ -114,6 +114,89 @@ body {
     margin-bottom: 0;
     flex: 1;
     line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Icono SVG de parámetros */
+.params-icon {
+    width: 24px;
+    height: 24px;
+    stroke: #4E80EE;
+    filter: drop-shadow(0 0 8px rgba(78, 128, 238, 0.4));
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.params-icon:hover {
+    stroke: #3B6FE5;
+    filter: drop-shadow(0 0 12px rgba(78, 128, 238, 0.6));
+    transform: scale(1.05);
+}
+
+/* Animación sutil para el icono */
+@keyframes gentle-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(78, 128, 238, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(78, 128, 238, 0.6));
+    }
+}
+
+.params-icon {
+    animation: gentle-glow 3s ease-in-out infinite;
+}
+
+/* Icono SVG de texto del examen */
+.text-icon {
+    width: 24px;
+    height: 24px;
+    stroke: #4E80EE;
+    filter: drop-shadow(0 0 8px rgba(78, 128, 238, 0.4));
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.text-icon:hover {
+    stroke: #3B6FE5;
+    filter: drop-shadow(0 0 12px rgba(78, 128, 238, 0.6));
+    transform: scale(1.05);
+}
+
+/* Asegurar que los h2 con iconos tengan flexbox */
+.step-card h2 {
+    display: flex;
+    align-items: center;
+}
+
+/* Animación para el icono de texto */
+.text-icon {
+    animation: gentle-glow 3s ease-in-out infinite;
+}
+
+/* Icono SVG de resultado extraído */
+.result-icon {
+    width: 24px;
+    height: 24px;
+    stroke: #4E80EE;
+    filter: drop-shadow(0 0 8px rgba(78, 128, 238, 0.4));
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.result-icon:hover {
+    stroke: #3B6FE5;
+    filter: drop-shadow(0 0 12px rgba(78, 128, 238, 0.6));
+    transform: scale(1.05);
+}
+
+/* Animación para el icono de resultado */
+.result-icon {
+    animation: gentle-glow 3s ease-in-out infinite;
 }
 
 .fecha-toggle {
@@ -629,5 +712,214 @@ body {
     #copyPasteText {
         font-size: 0.85rem;
         min-height: 250px;
+    }
+}
+
+/* Tabs Styles */
+.tabs-container {
+    width: 100%;
+}
+
+.tabs-header {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 16px;
+    gap: 0;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.tab-button:hover {
+    color: #374151;
+    background: #f9fafb;
+}
+
+.tab-button.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+    background: #f8faff;
+}
+
+.tabs-content {
+    width: 100%;
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.comparative-table-container {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comparative-table-container .status-text {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+/* Estilos para la tabla comparativa */
+.comparative-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.comparative-table thead {
+    background: #f8fafc;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.comparative-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    border-right: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+}
+
+.comparative-table th:first-child {
+    background: #4E80EE;
+    color: #ffffff;
+    font-weight: 700;
+    min-width: 120px;
+}
+
+.comparative-table th:last-child {
+    border-right: none;
+}
+
+.comparative-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.15s ease;
+}
+
+.comparative-table tbody tr:hover {
+    background: #f8faff;
+}
+
+.comparative-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.comparative-table td {
+    padding: 10px 16px;
+    color: #374151;
+    font-size: 0.8rem;
+    border-right: 1px solid #f1f5f9;
+    vertical-align: top;
+    line-height: 1.4;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.comparative-table td:first-child {
+    font-weight: 600;
+    background: #f8fafc;
+    color: #1f2937;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    border-right: 2px solid #e5e7eb;
+}
+
+.comparative-table td:last-child {
+    border-right: none;
+}
+
+/* Indicador de valores faltantes */
+.comparative-table td:not(:first-child) {
+    text-align: center;
+}
+
+.comparative-table td:not(:first-child):empty::after,
+.comparative-table td:not(:first-child):contains("-")::after {
+    content: "-";
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Responsive adjustments for tabs and table */
+@media (max-width: 768px) {
+    .comparative-table {
+        font-size: 0.75rem;
+    }
+    
+    .comparative-table th,
+    .comparative-table td {
+        padding: 8px 12px;
+    }
+    
+    .comparative-table th:first-child,
+    .comparative-table td:first-child {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tab-button {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+    }
+    
+    .comparative-table-container {
+        padding: 16px;
+        min-height: 150px;
+        overflow-x: auto;
+    }
+    
+    .comparative-table {
+        font-size: 0.7rem;
+        min-width: 400px;
+    }
+    
+    .comparative-table th,
+    .comparative-table td {
+        padding: 6px 8px;
+        white-space: nowrap;
+    }
+    
+    .comparative-table th:first-child,
+    .comparative-table td:first-child {
+        min-width: 80px;
+        position: sticky;
+        left: 0;
+        background: inherit;
+    }
+    
+    .comparative-table td {
+        font-size: 0.65rem;
     }
 }
