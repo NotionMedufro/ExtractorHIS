@@ -100,6 +100,44 @@ body {
     letter-spacing: -0.01em;
 }
 
+/* Header with fecha toggle */
+.header-with-fecha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    min-height: 40px;
+    width: 100%;
+}
+
+.header-with-fecha h2 {
+    margin-bottom: 0;
+    flex: 1;
+    line-height: 1.2;
+}
+
+.fecha-toggle {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    font-size: 0.875rem;
+    margin-left: auto; /* Esto empuja el botón hacia la derecha */
+}
+
+.fecha-toggle:hover {
+    border-color: #3b82f6;
+    background: #f8faff;
+}
+
+.fecha-toggle .checkmark-compact {
+    margin-right: 8px;
+}
+
 /* Selection Grid */
 .selection-grid {
     display: grid;
@@ -305,6 +343,7 @@ body {
     min-height: 200px;
     color: #1a1a1a;
 }
+
 
 .results-content:empty {
     display: none;

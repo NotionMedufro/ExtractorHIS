@@ -93,6 +93,7 @@ class MedicalDataExtractor {
     cleanAsterisks(text) {
         return text.replace(/\* /g, '*');
     }
+    
 
     // Extracción de Hemograma + PCR (optimizado para formato específico del laboratorio)
     extractHemograma() {
@@ -101,9 +102,11 @@ class MedicalDataExtractor {
         let result = '';
 
         // Hemoglobina - Buscar patrón específico: "Hemoglobina * 9.7 g/dL"
-        let hbMatch = this.copyPasteText.match(/Hemoglobina\s*\*?\s*(\d+\.?\d*)\s+g\/dL/i);
+        let hbMatch = this.copyPasteText.match(/Hemoglobina\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i);
         if (hbMatch) {
-            result += `Hb: ${hbMatch[1]}, `;
+            const hasAsterisk = hbMatch[1] === '*';
+            const value = hasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
+            result += `Hb: ${value}, `;
         }
 
         // Leucocitos - Buscar patrón: "Recuento de Leucocitos 5.67 10e3/uL"
