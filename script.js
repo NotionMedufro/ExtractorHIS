@@ -315,6 +315,47 @@ class MedicalDataExtractor {
         return this.cleanAsterisks(result);
     }
 
+    // Extracción de Gases en Sangre
+    extractGases() {
+        if (!this.copyPasteText) return '';
+
+        let values = [];
+
+        // pH
+        const phMatch = this.extractMatch(this.copyPasteText, /pH[\s\S]*?(\d+\.?\d*)/);
+        if (phMatch) {
+            const phValue = this.extractMatch(phMatch, /\d+\.?\d*/);
+            values.push(`pH: ${phValue}`);
+        }
+
+        // PCO2
+        const pco2Match = this.extractMatch(this.copyPasteText, /PCO2[\s\S]*?(\d+\.?\d*)\s+mmHg/);
+        if (pco2Match) {
+            const pco2Value = this.extractMatch(pco2Match, /(\d+\.?\d*)\s+mmHg/);
+            const pco2Number = this.extractMatch(pco2Value, /\d+\.?\d*/);
+            values.push(`pCO2: ${pco2Number}`);
+        }
+
+        // HCO3
+        const hco3Match = this.extractMatch(this.copyPasteText, /HCO3[\s\S]*?(\d+\.?\d*)\s+mmol\/L/);
+        if (hco3Match) {
+            const hco3Value = this.extractMatch(hco3Match, /(\d+\.?\d*)\s+mmol\/L/);
+            const hco3Number = this.extractMatch(hco3Value, /\d+\.?\d*/);
+            values.push(`HCO3: ${hco3Number}`);
+        }
+
+        // Saturación O2
+        const satO2Match = this.extractMatch(this.copyPasteText, /%\s+Saturación\s+O2[\s\S]*?(\d+\.?\d*)\s+%/);
+        if (satO2Match) {
+            const satO2Value = this.extractMatch(satO2Match, /(\d+\.?\d*)\s+%/);
+            const satO2Number = this.extractMatch(satO2Value, /\d+\.?\d*/);
+            values.push(`SatO2: ${satO2Number}`);
+        }
+
+        const result = values.length > 0 ? values.join(', ') + ', ' : '';
+        return this.cleanAsterisks(result);
+    }
+
     // Extracción de Fecha
     extractFecha() {
         if (!this.copyPasteText) return '';
@@ -368,6 +409,11 @@ class MedicalDataExtractor {
         if (selectedOptions.includes('Nutricional')) {
             const nutricional = this.extractNutricional();
             if (nutricional) results.push(nutricional);
+        }
+
+        if (selectedOptions.includes('Gases')) {
+            const gases = this.extractGases();
+            if (gases) results.push(gases);
         }
 
         return results.join('\n');
