@@ -391,40 +391,44 @@ class MedicalDataExtractor {
 
     // Función para dividir el texto en múltiples exámenes
     splitExamenes(text) {
-        // Dividir por patrones que indican inicio de nuevo examen
+        // Buscar divisiones más específicas por bloques de examen completos
         const examenes = [];
         
-        // Buscar patrones que indican inicio de examen
-        const patterns = [
-            /Fecha \d{2}\/\d{2}\/\d{4}/g,
-            /F\. Registro: \d{2}\/\d{2}\/\d{4}/g,
-            /SERVICIO DE SALUD ARAUCANIA SUR(?=.*HOSPITAL)/g
-        ];
+        // Patrón principal: buscar "F. Registro:" que marca el inicio de un nuevo examen
+        const registroPattern = /F\. Registro: \d{2}\/\d{2}\/\d{4}/g;
+        const matches = [];
+        let match;
         
-        // Encontrar todas las posiciones de inicio de examen
-        let splits = [];
-        patterns.forEach(pattern => {
-            let match;
-            const regex = new RegExp(pattern.source, 'g');
-            while ((match = regex.exec(text)) !== null) {
-                splits.push(match.index);
+        while ((match = registroPattern.exec(text)) !== null) {
+            matches.push(match.index);
+        }
+        
+        // Si no encontramos patrones de "F. Registro:", buscar por "Fecha"
+        if (matches.length === 0) {
+            const fechaPattern = /Fecha \d{2}\/\d{2}\/\d{4}/g;
+            while ((match = fechaPattern.exec(text)) !== null) {
+                matches.push(match.index);
             }
-        });
+        }
         
-        // Ordenar posiciones y eliminar duplicados
-        splits = [...new Set(splits)].sort((a, b) => a - b);
-        
-        // Si no hay divisiones claras, tratar como un solo examen
-        if (splits.length <= 1) {
+        // Si aún no hay divisiones, tratar como un solo examen
+        if (matches.length <= 1) {
             return [text];
         }
         
-        // Dividir el texto en fragmentos
-        for (let i = 0; i < splits.length; i++) {
-            const start = splits[i];
-            const end = splits[i + 1] || text.length;
+        // Dividir el texto en exámenes completos
+        for (let i = 0; i < matches.length; i++) {
+            const start = matches[i];
+            const end = matches[i + 1] || text.length;
             const fragment = text.substring(start, end).trim();
-            if (fragment.length > 100) { // Solo incluir fragmentos significativos
+            
+            // Solo incluir fragmentos significativos que contengan laboratorios
+            if (fragment.length > 200 && 
+                (fragment.includes('LABORATORIO') || 
+                 fragment.includes('HEMATOLOGÍA') || 
+                 fragment.includes('QUÍMICA') ||
+                 fragment.includes('COAGULACIÓN') ||
+                 fragment.includes('GASES'))) {
                 examenes.push(fragment);
             }
         }
@@ -536,23 +540,54 @@ class MedicalDataExtractor {
             return this.processSingleExamen(copyPasteText, selectedOptions);
         }
         
-        // Procesar múltiples exámenes
-        const examenesConFecha = examenes.map(examen => {
+        // Procesar múltiples exámenes y agrupar por fecha
+        const resultadosPorFecha = new Map();
+        
+        examenes.forEach(examen => {
             const fechaCompleta = this.extractFechaCompleta(examen);
-            const resultado = this.processSingleExamen(examen, selectedOptions, selectedOptions.includes('Fecha'));
+            const resultado = this.processSingleExamen(examen, selectedOptions, false); // No incluir fecha en resultado individual
             
-            return {
-                fecha: fechaCompleta,
-                fechaObj: this.parseFecha(fechaCompleta),
-                resultado: resultado.trim()
-            };
-        }).filter(examen => examen.resultado); // Solo incluir exámenes con resultados
+            if (fechaCompleta && resultado.trim()) {
+                const fechaCorta = fechaCompleta.substring(0, 5); // dd/mm
+                
+                if (!resultadosPorFecha.has(fechaCorta)) {
+                    resultadosPorFecha.set(fechaCorta, {
+                        fechaObj: this.parseFecha(fechaCompleta),
+                        resultados: []
+                    });
+                }
+                
+                // Agregar solo si tiene contenido útil
+                const contenido = resultado.trim();
+                if (contenido) {
+                    resultadosPorFecha.get(fechaCorta).resultados.push(contenido);
+                }
+            }
+        });
         
-        // Ordenar por fecha
-        examenesConFecha.sort((a, b) => a.fechaObj - b.fechaObj);
+        // Convertir a array y ordenar por fecha
+        const fechasOrdenadas = Array.from(resultadosPorFecha.entries())
+            .sort(([, a], [, b]) => a.fechaObj - b.fechaObj);
         
-        // Combinar resultados
-        const resultadosFinales = examenesConFecha.map(examen => examen.resultado);
+        // Construir resultado final
+        const resultadosFinales = fechasOrdenadas.map(([fechaCorta, data]) => {
+            // Combinar todos los resultados de la misma fecha
+            const todosLosResultados = data.resultados.join(' ').trim();
+            
+            // Limpiar espacios extra y comas duplicadas
+            const resultadoLimpio = todosLosResultados
+                .replace(/\s+/g, ' ')  // Múltiples espacios a uno solo
+                .replace(/,\s*,/g, ',') // Comas duplicadas
+                .replace(/,\s*$/g, '') // Coma final
+                .trim();
+            
+            if (resultadoLimpio) {
+                return selectedOptions.includes('Fecha') 
+                    ? `${fechaCorta}:\n${resultadoLimpio}` 
+                    : resultadoLimpio;
+            }
+            return '';
+        }).filter(resultado => resultado); // Filtrar resultados vacíos
         
         return resultadosFinales.join('\n\n');
     }
