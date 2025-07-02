@@ -94,59 +94,49 @@ class MedicalDataExtractor {
         return text.replace(/\* /g, '*');
     }
 
-    // Extracción de Hemograma + PCR (basado en tu fórmula de Notion)
+    // Extracción de Hemograma + PCR (optimizado para formato específico del laboratorio)
     extractHemograma() {
         if (!this.copyPasteText) return '';
 
         let result = '';
 
-        // Hemoglobina
-        const hbMatch = this.extractMatch(this.copyPasteText, /Hemoglobina[\s\S]*?(\d+\.?\d*)\s+g\/dL/);
+        // Hemoglobina - Buscar patrón específico: "Hemoglobina * 9.7 g/dL"
+        let hbMatch = this.copyPasteText.match(/Hemoglobina\s*\*?\s*(\d+\.?\d*)\s+g\/dL/i);
         if (hbMatch) {
-            const hbValue = this.extractMatch(hbMatch, /(\d+\.?\d*)\s+g\/dL/);
-            const hbNumber = this.extractMatch(hbValue, /\d+\.?\d*/);
-            result += `Hb: ${hbNumber}, `;
+            result += `Hb: ${hbMatch[1]}, `;
         }
 
-        // Leucocitos
-        const gbMatch = this.extractMatch(this.copyPasteText, /Recuento de Leucocitos[\s\S]*?(\d+\.?\d*)\s+10e3\/uL/);
+        // Leucocitos - Buscar patrón: "Recuento de Leucocitos 5.67 10e3/uL"
+        let gbMatch = this.copyPasteText.match(/(?:Recuento de )?Leucocitos\s*\*?\s*(\d+\.?\d*)\s+10e3\/uL/i);
         if (gbMatch) {
-            const gbValue = this.extractMatch(gbMatch, /(\d+\.?\d*)\s+10e3\/uL/);
-            const gbNumber = this.extractMatch(gbValue, /\d+\.?\d*/);
-            result += `GB: ${gbNumber}0 `;
+            // Formatear correctamente (ej: 5.67 → 5.670)
+            const gbFormatted = parseFloat(gbMatch[1]).toFixed(3);
+            result += `GB: ${gbFormatted} `;
         }
 
-        // % de Neutrófilos
-        const neutMatch = this.extractMatch(this.copyPasteText, /Neutrófilos %[\s\S]*?(\d+\.?\d*)\s+%/);
+        // % de Neutrófilos - Buscar patrón: "Neutrófilos % * 72.4 %"
+        let neutMatch = this.copyPasteText.match(/Neutrófilos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
         if (neutMatch) {
-            const neutValue = this.extractMatch(neutMatch, /(\d+\.?\d*)\s+%/);
-            const neutNumber = this.extractMatch(neutValue, /\d+\.?\d*/);
-            const neutRounded = Math.round(parseFloat(neutNumber));
+            const neutRounded = Math.round(parseFloat(neutMatch[1]));
             result += `(N: ${neutRounded}%), `;
         }
 
-        // Plaquetas
-        const plqMatch = this.extractMatch(this.copyPasteText, /Recuento de Plaquetas[\s\S]*?(\d+\.?\d*)\s+10e3\/uL/);
+        // Plaquetas - Buscar patrón: "Recuento de Plaquetas 364 10e3/uL"
+        let plqMatch = this.copyPasteText.match(/(?:Recuento de )?Plaquetas\s*\*?\s*(\d+)\s+10e3\/uL/i);
         if (plqMatch) {
-            const plqValue = this.extractMatch(plqMatch, /(\d+\.?\d*)\s+10e3\/uL/);
-            const plqNumber = this.extractMatch(plqValue, /\d+\.?\d*/);
-            result += `Plq: ${plqNumber}.000, `;
+            result += `Plq: ${plqMatch[1]}.000, `;
         }
 
-        // PCR
-        const pcrMatch = this.extractMatch(this.copyPasteText, /Proteína C Reactiva[\s\S]*?(\d+\.?\d*)\s+mg\/L/);
+        // PCR - Buscar patrón: "Proteína C Reactiva * 156.0 mg/L"
+        let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
         if (pcrMatch) {
-            const pcrValue = this.extractMatch(pcrMatch, /(\d+\.?\d*)\s+mg\/L/);
-            const pcrNumber = this.extractMatch(pcrValue, /\d+\.?\d*/);
-            result += `PCR: ${pcrNumber}, `;
+            result += `PCR: ${pcrMatch[1]}, `;
         }
 
         // Procalcitonina
-        const procaMatch = this.extractMatch(this.copyPasteText, /Procalcitonina[\s\S]*?(\d+\.?\d*)\s+ng\/mL/);
+        let procaMatch = this.copyPasteText.match(/Procalcitonina\s*\*?\s*(\d+\.?\d*)\s+ng\/mL/i);
         if (procaMatch) {
-            const procaValue = this.extractMatch(procaMatch, /(\d+\.?\d*)\s+ng\/mL/);
-            const procaNumber = this.extractMatch(procaValue, /\d+\.?\d*/);
-            result += `Proca: ${procaNumber}, `;
+            result += `Proca: ${procaMatch[1]}, `;
         }
 
         return this.cleanAsterisks(result);
@@ -391,23 +381,39 @@ class MedicalDataExtractor {
 
     // Función para dividir el texto en múltiples exámenes
     splitExamenes(text) {
-        // Buscar divisiones más específicas por bloques de examen completos
+        // Buscar divisiones por patrones que indiquen inicio de un nuevo examen completo
         const examenes = [];
-        
-        // Patrón principal: buscar "F. Registro:" que marca el inicio de un nuevo examen
-        const registroPattern = /F\. Registro: \d{2}\/\d{2}\/\d{4}/g;
         const matches = [];
         let match;
         
+        // Patrón 1: "F. Registro:" o "F. Informe:" que marca el inicio de un nuevo examen
+        const registroPattern = /F\. (?:Registro|Informe): \d{2}\/\d{2}\/\d{4}/g;
         while ((match = registroPattern.exec(text)) !== null) {
             matches.push(match.index);
         }
         
-        // Si no encontramos patrones de "F. Registro:", buscar por "Fecha"
+        // Patrón 2: Si no hay "F. Registro:", buscar "LABORATORIO CLÍNICO" + fecha
         if (matches.length === 0) {
-            const fechaPattern = /Fecha \d{2}\/\d{2}\/\d{4}/g;
-            while ((match = fechaPattern.exec(text)) !== null) {
+            const labPattern = /LABORATORIO[\s\S]*?\d{2}\/\d{2}\/\d{4}/g;
+            while ((match = labPattern.exec(text)) !== null) {
                 matches.push(match.index);
+            }
+        }
+        
+        // Patrón 3: Si no hay divisiones claras, buscar patrones de fecha al inicio de línea
+        if (matches.length === 0) {
+            // Primero intentar formato corto dd/mm:
+            const fechaCortaPattern = /^\d{2}\/\d{2}:/gm;
+            while ((match = fechaCortaPattern.exec(text)) !== null) {
+                matches.push(match.index);
+            }
+            
+            // Si no encontramos fechas cortas, buscar fechas completas
+            if (matches.length === 0) {
+                const fechaCompletaPattern = /^\d{2}\/\d{2}\/\d{4}:/gm;
+                while ((match = fechaCompletaPattern.exec(text)) !== null) {
+                    matches.push(match.index);
+                }
             }
         }
         
@@ -422,13 +428,8 @@ class MedicalDataExtractor {
             const end = matches[i + 1] || text.length;
             const fragment = text.substring(start, end).trim();
             
-            // Solo incluir fragmentos significativos que contengan laboratorios
-            if (fragment.length > 200 && 
-                (fragment.includes('LABORATORIO') || 
-                 fragment.includes('HEMATOLOGÍA') || 
-                 fragment.includes('QUÍMICA') ||
-                 fragment.includes('COAGULACIÓN') ||
-                 fragment.includes('GASES'))) {
+            // Solo incluir fragmentos significativos
+            if (fragment.length > 50) {
                 examenes.push(fragment);
             }
         }
@@ -526,104 +527,252 @@ class MedicalDataExtractor {
         return results.join('\n');
     }
 
+    // Función para dividir el texto por F. Registro:
+    splitExamenesByRegistro(text) {
+        // Dividir por el patrón "F. Registro:"
+        const examenes = [];
+        const matches = [];
+        let match;
+        
+        // Buscar todas las ocurrencias de "F. Registro:"
+        const registroPattern = /F\. Registro:/g;
+        while ((match = registroPattern.exec(text)) !== null) {
+            matches.push(match.index);
+        }
+        
+        // Si no hay "F. Registro:", devolver el texto completo
+        if (matches.length === 0) {
+            return [text];
+        }
+        
+        // Dividir el texto en fragmentos
+        for (let i = 0; i < matches.length; i++) {
+            const start = matches[i];
+            const end = matches[i + 1] || text.length;
+            const fragment = text.substring(start, end).trim();
+            
+            if (fragment.length > 100) { // Solo incluir fragmentos significativos
+                examenes.push(fragment);
+            }
+        }
+        
+        return examenes.length > 0 ? examenes : [text];
+    }
+    
+    // Función para extraer fecha de un examen específico
+    extractFechaFromExamen(examenText) {
+        if (!examenText) return null;
+        
+        // Buscar fecha en "F. Registro: dd/mm/yyyy"
+        let fechaMatch = this.extractMatch(examenText, /F\. Registro:\s*(\d{2}\/\d{2}\/\d{4})/);
+        
+        if (fechaMatch) {
+            const fechaCompleta = this.extractMatch(fechaMatch, /\d{2}\/\d{2}\/\d{4}/);
+            // Devolver formato dd/mm
+            return fechaCompleta.substring(0, 5);
+        }
+        
+        // Si no encuentra F. Registro, buscar otros patrones
+        fechaMatch = this.extractMatch(examenText, /Fecha\s+(\d{2}\/\d{2}\/\d{4})/);
+        if (fechaMatch) {
+            const fechaCompleta = this.extractMatch(fechaMatch, /\d{2}\/\d{2}\/\d{4}/);
+            return fechaCompleta.substring(0, 5);
+        }
+        
+        // Buscar cualquier fecha en formato dd/mm/yyyy
+        fechaMatch = this.extractMatch(examenText, /(\d{2}\/\d{2}\/\d{4})/);
+        if (fechaMatch) {
+            const fechaCompleta = this.extractMatch(fechaMatch, /\d{2}\/\d{2}\/\d{4}/);
+            return fechaCompleta.substring(0, 5);
+        }
+        
+        return null;
+    }
+    
+    // Función para extraer valores de fragmentos cortos (formato dd/mm: contenido)
+    extractValuesFromShortFragment(fragmentText, selectedOptions) {
+        if (!fragmentText || fragmentText.length < 3) return '';
+        
+        const valoresEncontrados = [];
+        
+        // Buscar valores directamente en el texto del fragmento usando regex simples
+        
+        if (selectedOptions.includes('Hemograma')) {
+            // Buscar Hemoglobina: Hb: x.x
+            const hbMatch = fragmentText.match(/Hb:\s*(\*?\d+\.?\d*)/i);
+            if (hbMatch) valoresEncontrados.push(`Hb: ${hbMatch[1]}`);
+            
+            // Buscar Glóbulos Blancos: GB: x.xxx
+            const gbMatch = fragmentText.match(/GB:\s*(\*?\d+\.?\d*)/i);
+            if (gbMatch) valoresEncontrados.push(`GB: ${gbMatch[1]}`);
+            
+            // Buscar % Neutrófilos: (N: xx%)
+            const neutMatch = fragmentText.match(/\(N:\s*(\*?\d+)%\)/i);
+            if (neutMatch) valoresEncontrados.push(`(N: ${neutMatch[1]}%)`);
+            
+            // Buscar Plaquetas: Plq: xxx.000
+            const plqMatch = fragmentText.match(/Plq:\s*(\*?\d+\.?\d*)/i);
+            if (plqMatch) valoresEncontrados.push(`Plq: ${plqMatch[1]}`);
+            
+            // Buscar PCR: PCR: xx.x
+            const pcrMatch = fragmentText.match(/PCR:\s*(\*?\d+\.?\d*)/i);
+            if (pcrMatch) valoresEncontrados.push(`PCR: ${pcrMatch[1]}`);
+        }
+        
+        if (selectedOptions.includes('Renal')) {
+            // Buscar Creatinina: Crea: x.xx
+            const creaMatch = fragmentText.match(/Crea:\s*(\*?\d+\.?\d*)/i);
+            if (creaMatch) valoresEncontrados.push(`Crea: ${creaMatch[1]}`);
+            
+            // Buscar BUN: BUN: xx.x
+            const bunMatch = fragmentText.match(/BUN:\s*(\*?\d+\.?\d*)/i);
+            if (bunMatch) valoresEncontrados.push(`BUN: ${bunMatch[1]}`);
+            
+            // Buscar ELP: ELP: xxx/x.x/xxx
+            const elpMatch = fragmentText.match(/ELP:\s*(\*?\d+\/\*?\d+\.?\d*\/\*?\d+)/i);
+            if (elpMatch) valoresEncontrados.push(`ELP: ${elpMatch[1]}`);
+        }
+        
+        if (selectedOptions.includes('Nutricional')) {
+            // Buscar Albúmina: Alb: x.x
+            const albMatch = fragmentText.match(/Alb:\s*(\*?\d+\.?\d*)/i);
+            if (albMatch) valoresEncontrados.push(`Alb: ${albMatch[1]}`);
+        }
+        
+        if (selectedOptions.includes('Coagulación')) {
+            // Buscar INR: INR: x.xx
+            const inrMatch = fragmentText.match(/INR:\s*(\*?\d+\.?\d*)/i);
+            if (inrMatch) valoresEncontrados.push(`INR: ${inrMatch[1]}`);
+            
+            // Buscar PT: PT: xx.x
+            const ptMatch = fragmentText.match(/PT:\s*(\*?\d+\.?\d*)/i);
+            if (ptMatch) valoresEncontrados.push(`PT: ${ptMatch[1]}`);
+            
+            // Buscar PTT: PTT: xx.x
+            const pttMatch = fragmentText.match(/PTT:\s*(\*?\d+\.?\d*)/i);
+            if (pttMatch) valoresEncontrados.push(`PTT: ${pttMatch[1]}`);
+        }
+        
+        return valoresEncontrados.length > 0 ? valoresEncontrados.join(', ') : '';
+    }
+    
     // Función principal de procesamiento
     processSelection(copyPasteText, selectedOptions) {
         if (selectedOptions.includes('Talcual')) {
             return copyPasteText;
         }
 
-        // Dividir el texto en múltiples exámenes
-        const examenes = this.splitExamenes(copyPasteText);
+        // Detectar si hay múltiples exámenes por F. Registro:
+        const registroMatches = copyPasteText.match(/F\. Registro:/g);
         
-        // Si solo hay un examen, procesarlo normalmente
-        if (examenes.length === 1) {
+        // Si solo hay un examen o ninguno, procesarlo normalmente
+        if (!registroMatches || registroMatches.length <= 1) {
             return this.processSingleExamen(copyPasteText, selectedOptions);
         }
         
-        // Procesar múltiples exámenes y agrupar por fecha
+        // CASO ESPECIAL: Múltiples exámenes con F. Registro
+        // Dividir por exámenes y procesar cada uno independientemente
+        const examenes = this.splitExamenesByRegistro(copyPasteText);
+        
+        // Procesar cada examen y extraer fecha + valores
         const resultadosPorFecha = new Map();
         
-        examenes.forEach(examen => {
-            const fechaCompleta = this.extractFechaCompleta(examen);
+        // Consolidar fragmentos por fecha
+        const fragmentosPorFecha = new Map();
+        
+        examenes.forEach((examen, index) => {
+            const fechaExtraida = this.extractFechaFromExamen(examen);
             
-            if (fechaCompleta) {
-                const fechaCorta = fechaCompleta.substring(0, 5); // dd/mm
-                
-                if (!resultadosPorFecha.has(fechaCorta)) {
-                    resultadosPorFecha.set(fechaCorta, {
-                        fechaObj: this.parseFecha(fechaCompleta),
-                        hemograma: '',
-                        renal: '',
-                        hepatico: '',
-                        coagulacion: '',
-                        nutricional: '',
-                        gases: ''
-                    });
+            if (fechaExtraida) {
+                if (!fragmentosPorFecha.has(fechaExtraida)) {
+                    fragmentosPorFecha.set(fechaExtraida, []);
                 }
-                
-                // Procesar cada sección individualmente
-                this.copyPasteText = examen;
-                const data = resultadosPorFecha.get(fechaCorta);
-                
-                if (selectedOptions.includes('Hemograma')) {
-                    const hemo = this.extractHemograma();
-                    if (hemo) data.hemograma = hemo;
+                fragmentosPorFecha.get(fechaExtraida).push(examen);
+            }
+        });
+        
+        // Procesar cada fecha consolidando todos sus fragmentos
+        fragmentosPorFecha.forEach((fragmentos, fechaExtraida) => {
+            // Unir todos los fragmentos de esta fecha
+            const textoCompleto = fragmentos.join('\n\n');
+            
+            // Procesar el texto completo de esta fecha
+            this.copyPasteText = textoCompleto;
+            
+            const valoresExamen = [];
+            
+            if (selectedOptions.includes('Hemograma')) {
+                const hemo = this.extractHemograma();
+                if (hemo && hemo.trim()) {
+                    valoresExamen.push(hemo.trim());
                 }
-                
-                if (selectedOptions.includes('Renal')) {
-                    const renal = this.extractRenal();
-                    if (renal) data.renal = renal;
+            }
+            
+            if (selectedOptions.includes('Renal')) {
+                const renal = this.extractRenal();
+                if (renal && renal.trim()) {
+                    valoresExamen.push(renal.trim());
                 }
-                
-                if (selectedOptions.includes('Hepático')) {
-                    const hepatico = this.extractHepatico();
-                    if (hepatico) data.hepatico = hepatico;
+            }
+            
+            if (selectedOptions.includes('Hepático')) {
+                const hepatico = this.extractHepatico();
+                if (hepatico && hepatico.trim()) {
+                    valoresExamen.push(hepatico.trim());
                 }
-                
-                if (selectedOptions.includes('Coagulación')) {
-                    const coag = this.extractCoagulacion();
-                    if (coag) data.coagulacion = coag;
+            }
+            
+            if (selectedOptions.includes('Nutricional')) {
+                const nutri = this.extractNutricional();
+                if (nutri && nutri.trim()) {
+                    valoresExamen.push(nutri.trim());
                 }
-                
-                if (selectedOptions.includes('Nutricional')) {
-                    const nutri = this.extractNutricional();
-                    if (nutri) data.nutricional = nutri;
+            }
+            
+            if (selectedOptions.includes('Coagulación')) {
+                const coag = this.extractCoagulacion();
+                if (coag && coag.trim()) {
+                    valoresExamen.push(coag.trim());
                 }
-                
-                if (selectedOptions.includes('Gases')) {
-                    const gases = this.extractGases();
-                    if (gases) data.gases = gases;
+            }
+            
+            if (selectedOptions.includes('Gases')) {
+                const gases = this.extractGases();
+                if (gases && gases.trim()) {
+                    valoresExamen.push(gases.trim());
                 }
+            }
+            
+            // Agregar resultado consolidado con saltos de línea entre parámetros
+            if (valoresExamen.length > 0) {
+                // Limpiar comas finales de cada sección individualmente
+                const valoresLimpios = valoresExamen.map(valor => valor.replace(/,\s*$/, ''));
+                // Unir con saltos de línea para mejor legibilidad
+                const contenidoCompleto = valoresLimpios.join('\n');
+                resultadosPorFecha.set(fechaExtraida, contenidoCompleto);
             }
         });
         
         // Convertir a array y ordenar por fecha
         const fechasOrdenadas = Array.from(resultadosPorFecha.entries())
-            .sort(([, a], [, b]) => a.fechaObj - b.fechaObj);
+            .sort(([fechaA], [fechaB]) => {
+                // Convertir fechas dd/mm a números para ordenamiento
+                const [diaA, mesA] = fechaA.split('/').map(Number);
+                const [diaB, mesB] = fechaB.split('/').map(Number);
+                const timestampA = new Date(2024, mesA - 1, diaA).getTime();
+                const timestampB = new Date(2024, mesB - 1, diaB).getTime();
+                return timestampA - timestampB;
+            });
         
         // Construir resultado final
-        const resultadosFinales = fechasOrdenadas.map(([fechaCorta, data]) => {
-            const secciones = [];
-            
-            if (data.hemograma) secciones.push(data.hemograma);
-            if (data.renal) secciones.push(data.renal);
-            if (data.hepatico) secciones.push(data.hepatico);
-            if (data.coagulacion) secciones.push(data.coagulacion);
-            if (data.nutricional) secciones.push(data.nutricional);
-            if (data.gases) secciones.push(data.gases);
-            
-            const contenidoCompleto = secciones.join('').trim();
-            
-            if (contenidoCompleto) {
-                // Limpiar comas extra al final
-                const contenidoLimpio = contenidoCompleto.replace(/,\s*$/, '');
-                
+        const resultadosFinales = fechasOrdenadas.map(([fechaCorta, contenido]) => {
+            if (contenido) {
                 return selectedOptions.includes('Fecha') 
-                    ? `${fechaCorta}:\n${contenidoLimpio}` 
-                    : contenidoLimpio;
+                    ? `${fechaCorta}:\n${contenido}` 
+                    : contenido;
             }
             return '';
-        }).filter(resultado => resultado); // Filtrar resultados vacíos
+        }).filter(resultado => resultado);
         
         return resultadosFinales.join('\n\n');
     }
