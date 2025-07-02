@@ -133,9 +133,15 @@
                                 </div>
                                 
                                 <!-- Pestaña Tabla Comparativa -->
-                                <div class="tab-content" id="tab-tabla">
+<div class="tab-content" id="tab-tabla">
                                     <div class="comparative-table-container">
                                         <p class="status-text">Selecciona parámetros y pega el texto para ver la tabla comparativa automáticamente</p>
+                                    </div>
+                                    <div class="table-actions" id="tableActions" style="display: none;">
+                                        <button id="downloadImageBtn" class="copy-button">
+                                            <span class="copy-icon">📸</span>
+                                            <span class="copy-text">Descargar como Imagen</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -148,6 +154,8 @@
 
     <div id="notification" class="notification"></div>
     
+    <!-- HTML2Canvas para convertir tabla a imagen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1119,11 +1119,23 @@ class MedicalDataExtractor {
 
         // Actualizar contenido de la tabla comparativa
         const tablaComparativaContainer = document.querySelector('#tab-tabla .comparative-table-container');
+        const tableActions = document.getElementById('tableActions');
+        
         if (tablaComparativaContainer) {
-            tablaComparativaContainer.innerHTML = generarTablaComparativa();
+            const tablaHTML = generarTablaComparativa();
+            tablaComparativaContainer.innerHTML = tablaHTML;
             tablaComparativaContainer.style.display = 'block';
             tablaComparativaContainer.style.textAlign = 'left';
             tablaComparativaContainer.style.alignItems = 'flex-start';
+            
+            // Mostrar u ocultar botones de acción según si hay tabla
+            if (tableActions) {
+                if (tablaHTML.includes('<table')) {
+                    tableActions.style.display = 'flex';
+                } else {
+                    tableActions.style.display = 'none';
+                }
+            }
         }
         
         // Convertir a array y ordenar por fecha
@@ -1345,4 +1357,470 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Ejecutar autoExtract inicial para mostrar el estado por defecto
     autoExtract();
+    
+    // Funcionalidad para botones de acción de la tabla
+    const downloadImageBtn = document.getElementById('downloadImageBtn');
+    
+    // Descargar tabla como imagen
+    downloadImageBtn.addEventListener('click', function() {
+        const tableContainer = document.querySelector('.comparative-table-container');
+        const table = tableContainer.querySelector('.comparative-table');
+        
+        if (!table) {
+            showNotification('No hay tabla para descargar', 'error');
+            return;
+        }
+        
+        downloadImageBtn.disabled = true;
+        downloadImageBtn.innerHTML = '<span class="copy-icon">⏳</span><span class="copy-text">Generando...</span>';
+        
+        // Configurar html2canvas para mejor calidad
+        html2canvas(table, {
+            scale: 2, // Mayor resolución
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            scrollX: 0,
+            scrollY: 0,
+            width: table.scrollWidth,
+            height: table.scrollHeight
+        }).then(canvas => {
+            // Crear enlace de descarga
+            const link = document.createElement('a');
+            link.download = `tabla-comparativa-${new Date().toISOString().split('T')[0]}.png`;
+            link.href = canvas.toDataURL('image/png');
+            
+            // Descargar
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Tabla descargada como imagen', 'success');
+        }).catch(error => {
+            console.error('Error al generar imagen:', error);
+            showNotification('Error al generar la imagen', 'error');
+        }).finally(() => {
+            downloadImageBtn.disabled = false;
+            downloadImageBtn.innerHTML = '<span class="copy-icon">📸</span><span class="copy-text">Descargar como Imagen</span>';
+        });
+    });
+    
 });
+
+// Función para crear enlace online usando servicios de hosting temporal
+async function createOnlineLink(htmlContent) {
+    // Intentar múltiples servicios de hosting temporal
+    
+    // Servicio 1: tmpfiles.org (sin CORS)
+    try {
+        const response = await fetch('https://tmpfiles.org/api/v1/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file: btoa(unescape(encodeURIComponent(htmlContent))),
+                name: `tabla-comparativa-${Date.now()}.html`
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.data && result.data.url) {
+                return result.data.url;
+            }
+        }
+    } catch (error) {
+        console.log('tmpfiles.org no disponible:', error);
+    }
+    
+    // Servicio 2: 0x0.st (minimalista)
+    try {
+        const formData = new FormData();
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        formData.append('file', blob, `tabla-${Date.now()}.html`);
+        
+        const response = await fetch('https://0x0.st', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const url = await response.text();
+            if (url && url.trim().startsWith('http')) {
+                return url.trim();
+            }
+        }
+    } catch (error) {
+        console.log('0x0.st no disponible:', error);
+    }
+    
+    // Servicio 3: file.io
+    try {
+        const formData = new FormData();
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        formData.append('file', blob);
+        
+        const response = await fetch('https://file.io/', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.link) {
+                return result.link;
+            }
+        }
+    } catch (error) {
+        console.log('file.io no disponible:', error);
+    }
+    
+    return null; // Si ningún servicio funcionó
+}
+
+// Función para mostrar opciones de hosting cuando falla la generación automática
+function showHostingOptions(htmlContent) {
+    // Descargar el HTML automáticamente
+    downloadHTMLFallback(htmlContent);
+    
+    // Mostrar modal con instrucciones
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80%;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        text-align: left;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    modalContent.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; color: #1a1a1a; text-align: center;">📂 Archivo HTML Descargado</h3>
+        <p style="margin: 0 0 20px 0; color: #6b7280; text-align: center;">El archivo HTML se ha descargado. Para crear un enlace compartible, súbelo a cualquiera de estos servicios <strong>gratuitos</strong>:</p>
+        
+        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #3b82f6;">
+            <h4 style="margin: 0 0 12px 0; color: #1f2937;">🚀 Opciones Recomendadas (Gratuitas):</h4>
+            
+            <div style="margin: 12px 0;">
+                <strong>1. GitHub Pages</strong> (Permanente)
+                <ul style="margin: 4px 0 0 16px; color: #6b7280;">
+                    <li>Crear repositorio en <a href="https://github.com" target="_blank" style="color: #3b82f6;">github.com</a></li>
+                    <li>Subir el archivo HTML</li>
+                    <li>Activar GitHub Pages en Settings</li>
+                    <li>Obtienes: <code>https://tuusuario.github.io/repo/archivo.html</code></li>
+                </ul>
+            </div>
+            
+            <div style="margin: 12px 0;">
+                <strong>2. Netlify Drop</strong> (Muy fácil)
+                <ul style="margin: 4px 0 0 16px; color: #6b7280;">
+                    <li>Ir a <a href="https://netlify.com/drop" target="_blank" style="color: #3b82f6;">netlify.com/drop</a></li>
+                    <li>Arrastrar el archivo HTML</li>
+                    <li>Obtienes enlace inmediato</li>
+                </ul>
+            </div>
+            
+            <div style="margin: 12px 0;">
+                <strong>3. Surge.sh</strong> (Solo terminal)
+                <ul style="margin: 4px 0 0 16px; color: #6b7280;">
+                    <li>Instalar: <code>npm install -g surge</code></li>
+                    <li>Ejecutar: <code>surge</code></li>
+                    <li>Seleccionar el archivo HTML</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="background: #fef2f2; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #ef4444;">
+            <h4 style="margin: 0 0 8px 0; color: #dc2626;">💡 Consejos:</h4>
+            <ul style="margin: 0 0 0 16px; color: #7f1d1d;">
+                <li>El enlace será público y accesible por cualquier persona</li>
+                <li>GitHub Pages es la opción más permanente</li>
+                <li>Netlify Drop es la más rápida (solo arrastra y listo)</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 24px;">
+            <button onclick="closeHostingModal()" style="padding: 12px 24px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">✕ Cerrar</button>
+            <button onclick="window.open('https://netlify.com/drop', '_blank')" style="padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; margin-left: 12px;">🚀 Ir a Netlify Drop</button>
+        </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Agregar función para cerrar modal
+    window.closeHostingModal = function() {
+        modal.remove();
+    };
+    
+    // Cerrar modal al hacer clic fuera
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeHostingModal();
+        }
+    });
+}
+
+// Función para generar HTML simplificado (más compacto)
+function generateSimplifiedTableHTML(table) {
+    const tableHTML = table.outerHTML;
+    
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tabla Comparativa</title><style>body{font-family:sans-serif;margin:20px;background:#f5f5f5}table{width:100%;border-collapse:collapse;background:white;box-shadow:0 2px 4px rgba(0,0,0,0.1)}th,td{padding:8px 12px;border:1px solid #ddd;text-align:left}th{background:#4E80EE;color:white;font-weight:bold}th:first-child{background:#4E80EE}td:first-child{background:#f8f9fa;font-weight:600}td:not(:first-child){text-align:center;font-family:monospace}tr:hover{background:#f8faff}</style></head><body><h2>🩺 Tabla Comparativa de Laboratorio</h2>${tableHTML}<p style="text-align:center;color:#666;margin-top:20px;">Generado por Extractor HIS - ${new Date().toLocaleDateString()}</p></body></html>`;
+}
+
+// Función fallback para descargar HTML
+function downloadHTMLFallback(htmlContent) {
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    link.download = `tabla-comparativa-${timestamp}.html`;
+    link.href = URL.createObjectURL(blob);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+// Función para mostrar modal con el enlace compartible
+function showShareModal(url) {
+    // Crear modal dinámicamente
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    modalContent.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; color: #1a1a1a;">🎉 ¡Enlace generado exitosamente!</h3>
+        <p style="margin: 0 0 20px 0; color: #6b7280;">Tu tabla comparativa está disponible en:</p>
+        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin: 16px 0; border: 1px solid #e5e7eb;">
+            <input type="text" value="${url}" readonly style="width: 100%; border: none; background: none; text-align: center; color: #3b82f6; font-family: monospace; font-size: 14px;" id="shareUrl">
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+            <button onclick="window.open('${url}', '_blank')" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">🔗 Abrir enlace</button>
+            <button onclick="copyShareUrl()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">📋 Copiar URL</button>
+            <button onclick="closeShareModal()" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">✕ Cerrar</button>
+        </div>
+        <p style="margin: 20px 0 0 0; font-size: 12px; color: #9ca3af;">⚠️ Nota: El enlace puede expirar en 30 días</p>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Agregar estilos de animación
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Cerrar modal al hacer clic fuera
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeShareModal();
+        }
+    });
+    
+    // Funciones globales para el modal
+    window.closeShareModal = function() {
+        modal.remove();
+        style.remove();
+    };
+    
+    window.copyShareUrl = function() {
+        const urlInput = document.getElementById('shareUrl');
+        urlInput.select();
+        navigator.clipboard.writeText(url).then(() => {
+            showNotification('URL copiada al portapapeles', 'success');
+        });
+    };
+}
+
+// Función para generar HTML autónomo de la tabla
+function generateStandaloneTableHTML(table) {
+    const tableHTML = table.outerHTML;
+    
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla Comparativa - Extractor HIS</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+            background: #fafafa;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+            color: #1a1a1a;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1a1a1a;
+            margin-bottom: 24px;
+            font-size: 1.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .comparative-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        .comparative-table thead {
+            background: #f8fafc;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .comparative-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            border-right: 1px solid #e5e7eb;
+        }
+        .comparative-table th:first-child {
+            background: #4E80EE;
+            color: #ffffff;
+            font-weight: 700;
+            min-width: 120px;
+        }
+        .comparative-table th:last-child {
+            border-right: none;
+        }
+        .comparative-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.15s ease;
+        }
+        .comparative-table tbody tr:hover {
+            background: #f8faff;
+        }
+        .comparative-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        .comparative-table td {
+            padding: 10px 16px;
+            color: #374151;
+            font-size: 0.8rem;
+            border-right: 1px solid #f1f5f9;
+            vertical-align: top;
+            line-height: 1.4;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        }
+        .comparative-table td:first-child {
+            font-weight: 600;
+            background: #f8fafc;
+            color: #1f2937;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            border-right: 2px solid #e5e7eb;
+        }
+        .comparative-table td:last-child {
+            border-right: none;
+        }
+        .comparative-table td:not(:first-child) {
+            text-align: center;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+                margin: 10px;
+            }
+            .comparative-table {
+                font-size: 0.75rem;
+            }
+            .comparative-table th,
+            .comparative-table td {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 Tabla Comparativa de Laboratorio</h1>
+        ${tableHTML}
+        <div class="footer">
+            <p>Generado por Extractor de Valores de Laboratorio HIS</p>
+            <p>Fecha de generación: ${new Date().toLocaleDateString('es-ES', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+}
