@@ -156,22 +156,14 @@ class MedicalDataExtractor {
     extractRenal() {
         if (!this.copyPasteText) return '';
 
-<<<<<<< HEAD
         let values = [];
-=======
-        let result = '';
->>>>>>> 3d1d40e627c5bb4b3dad989ca7aea24c026955e4
 
         // Creatinina
         const creaMatch = this.extractMatch(this.copyPasteText, /Creatinina[\s\S]*?(\d+\.?\d*)\s+mg\/dL/);
         if (creaMatch) {
             const creaValue = this.extractMatch(creaMatch, /(\d+\.?\d*)\s+mg\/dL/);
             const creaNumber = this.extractMatch(creaValue, /\d+\.?\d*/);
-<<<<<<< HEAD
             values.push(`Crea: ${creaNumber}`);
-=======
-            result += `Crea: ${creaNumber}, `;
->>>>>>> 3d1d40e627c5bb4b3dad989ca7aea24c026955e4
         }
 
         // BUN (Nitrógeno Ureico)
@@ -179,7 +171,6 @@ class MedicalDataExtractor {
         if (bunMatch) {
             const bunValue = this.extractMatch(bunMatch, /(\d+\.?\d*)\s+mg/);
             const bunNumber = this.extractMatch(bunValue, /\d+\.?\d*/);
-<<<<<<< HEAD
             values.push(`BUN: ${bunNumber}`);
         }
 
@@ -202,35 +193,6 @@ class MedicalDataExtractor {
         }
 
         const result = values.length > 0 ? values.join(', ') + ', ' : '';
-=======
-            result += `BUN: ${bunNumber}, `;
-        }
-
-        // Sodio
-        const naMatch = this.extractMatch(this.copyPasteText, /Sodio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        if (naMatch) {
-            const naValue = this.extractMatch(naMatch, /(\d+\.?\d*)\s+mEq\/L/);
-            const naNumber = this.extractMatch(naValue, /\d+\.?\d*/);
-            result += `Na: ${naNumber}, `;
-        }
-
-        // Potasio
-        const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        if (kMatch) {
-            const kValue = this.extractMatch(kMatch, /(\d+\.?\d*)\s+mEq\/L/);
-            const kNumber = this.extractMatch(kValue, /\d+\.?\d*/);
-            result += `K: ${kNumber}, `;
-        }
-
-        // Cloro
-        const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\d+\.?\d*)\s+mEq\/L/);
-        if (clMatch) {
-            const clValue = this.extractMatch(clMatch, /(\d+\.?\d*)\s+mEq\/L/);
-            const clNumber = this.extractMatch(clValue, /\d+\.?\d*/);
-            result += `Cl: ${clNumber}, `;
-        }
-
->>>>>>> 3d1d40e627c5bb4b3dad989ca7aea24c026955e4
         return this.cleanAsterisks(result);
     }
 
