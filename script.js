@@ -360,7 +360,27 @@ class MedicalDataExtractor {
     extractFecha() {
         if (!this.copyPasteText) return '';
 
-        const fechaMatch = this.extractMatch(this.copyPasteText, /Toma Muestra:\s*(\d{2}\/\d{2}\/\d{4})/);
+        // Buscar varios patrones de fecha
+        let fechaMatch = null;
+        
+        // Patrón 1: "Fecha dd/mm/yyyy"
+        fechaMatch = this.extractMatch(this.copyPasteText, /Fecha\s+(\d{2}\/\d{2}\/\d{4})/);
+        
+        // Patrón 2: "Toma Muestra: dd/mm/yyyy"
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(this.copyPasteText, /Toma Muestra:\s*(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
+        // Patrón 3: Fecha al inicio de línea "dd/mm/yyyy"
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(this.copyPasteText, /^(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
+        // Patrón 4: Cualquier fecha en formato dd/mm/yyyy
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(this.copyPasteText, /(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
         if (fechaMatch) {
             const fechaCompleta = this.extractMatch(fechaMatch, /\d{2}\/\d{2}\/\d{4}/);
             // Extraer solo día/mes y agregar dos puntos: dd/mm:
