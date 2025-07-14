@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Extractor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-area { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        textarea { width: 100%; height: 200px; }
+        button { margin: 10px 0; padding: 10px 20px; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Extractor de Hemograma</h1>
+    
+    <div class="test-area">
+        <h2>Checkbox de Hemograma</h2>
+        <label>
+            <input type="checkbox" value="Hemograma" class="selection-checkbox" id="hemograma-checkbox">
+            Hemograma + PCR
+        </label>
+        <button class="dropdown-toggle" data-target="hemograma-dropdown">▼</button>
+        
+        <div id="hemograma-dropdown" class="dropdown-content" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+            <h3>Opciones adicionales:</h3>
+            <label><input type="checkbox" value="Hcto" class="selection-checkbox hemograma-extra"> Hcto</label><br>
+            <label><input type="checkbox" value="VCM" class="selection-checkbox hemograma-extra"> VCM</label><br>
+            <label><input type="checkbox" value="VHS" class="selection-checkbox hemograma-extra"> VHS</label><br>
+        </div>
+    </div>
+    
+    <div class="test-area">
+        <h2>Texto de prueba</h2>
+        <textarea id="copyPasteText" placeholder="Pega aquí el texto del examen...">HEMATOLOGÍA
+Validado por: TM. Osvaldo Muñoz Jaramillo (20/03/2025 07:48:16)
+Recuento de Leucocitos * 15.89 10e3/uL [4-12]
+Recuento de Eritrocitos 3.85 10e6/uL [3.8-5.8]
+Hematocrito * 34.1 % [35-47]
+Hemoglobina * 11.1 g/dL [14-17.5]
+HCM-Hb Corpuscular Media 28.7 pg [25-32]
+CHCM-Conc.Hb Corpuscular Media 32.6 g / dl [32-36]
+VCM-Volumen Corpuscular Medio 88.6 fL [82-95]
+RDW 14.1 % [11.5 - 14.5]
+Recuento de Plaquetas * 512 10e3/uL [150-450]
+Neutrófilos % * 73 % [50-70]
+Linfocitos % * 16.2 % [25-40]
+Neutrófilos 11.6 10e3/uL
+Linfocitos 2.57 10e3/uL
+Proteína C Reactiva * 32.1 mg/L [<=5]</textarea>
+    </div>
+    
+    <div class="test-area">
+        <button onclick="testExtraction()">Probar Extracción</button>
+        <div id="results" class="result"></div>
+    </div>
+
+    <script>
+        // Simulación básica de la clase MedicalDataExtractor
+        class MedicalDataExtractor {
+            constructor() {
+                this.copyPasteText = '';
+            }
+            
+            getSelectedHemogramaExtraOptions() {
+                const checkboxes = document.querySelectorAll('.hemograma-extra:checked');
+                return Array.from(checkboxes).map(cb => cb.value);
+            }
+            
+            extractHemograma() {
+                if (!this.copyPasteText) return '';
+                
+                let result = '';
+                const selectedExtraOptions = this.getSelectedHemogramaExtraOptions();
+                
+                // Hemoglobina
+                let hbMatch = this.copyPasteText.match(/Hemoglobina\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i);
+                if (hbMatch) {
+                    const hasAsterisk = hbMatch[1] === '*';
+                    const value = hasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
+                    result += `Hb: ${value}, `;
+                }
+                
+                // Leucocitos
+                let gbMatch = this.copyPasteText.match(/(?:Recuento de )?Leucocitos\s*\*?\s*(\d+\.?\d*)\s+10e3\/uL/i);
+                if (gbMatch) {
+                    const gbFormatted = parseFloat(gbMatch[1]).toFixed(3);
+                    result += `GB: ${gbFormatted} `;
+                }
+                
+                // Neutrófilos %
+                let neutMatch = this.copyPasteText.match(/Neutrófilos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
+                if (neutMatch) {
+                    const neutRounded = Math.round(parseFloat(neutMatch[1]));
+                    result += `(N: ${neutRounded}%), `;
+                }
+                
+                // Plaquetas
+                let plqMatch = this.copyPasteText.match(/(?:Recuento de )?Plaquetas\s*\*?\s*(\d+)\s+10e3\/uL/i);
+                if (plqMatch) {
+                    result += `Plq: ${plqMatch[1]}.000, `;
+                }
+                
+                // PCR
+                let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
+                if (pcrMatch) {
+                    result += `PCR: ${pcrMatch[1]}, `;
+                }
+                
+                return result;
+            }
+        }
+        
+        function testExtraction() {
+            const extractor = new MedicalDataExtractor();
+            extractor.copyPasteText = document.getElementById('copyPasteText').value;
+            
+            const hemogramaChecked = document.getElementById('hemograma-checkbox').checked;
+            console.log('Hemograma checked:', hemogramaChecked);
+            
+            if (hemogramaChecked) {
+                const result = extractor.extractHemograma();
+                console.log('Resultado:', result);
+                document.getElementById('results').innerHTML = result || 'No se encontraron resultados';
+            } else {
+                document.getElementById('results').innerHTML = 'Selecciona Hemograma para probar';
+            }
+        }
+        
+        // Funcionalidad del desplegable
+        document.querySelector('.dropdown-toggle').addEventListener('click', function(e) {
+            e.preventDefault();
+            const dropdown = document.getElementById('hemograma-dropdown');
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? '▼' : '▲';
+        });
+    </script>
+</body>
+</html>

@@ -94,16 +94,329 @@ class MedicalDataExtractor {
         return text.replace(/\* /g, '*');
     }
     
+    // Valores normales de referencia
+    static getNormalValues() {
+        return {
+            // Valores que dependen del sexo
+            'Hb': {
+                'male': '13-17 g/dL',
+                'female': '12-16 g/dL',
+                'pregnant': '11-16 g/dL'
+            },
+            'Hcto': {
+                'male': '42-52%',
+                'female': '37-47%'
+            },
+            // Valores para parámetros futuros (NOTA: Estos valores están guardados para cuando se agreguen al extractor)
+            'Hierro': {
+                'male': '65-175 μg/dL',
+                'female': '50-170 μg/dL'
+            },
+            'Ferritina': {
+                'male': '20-250 ng/mL',
+                'female': '10-120 ng/mL'
+            },
+            'Transferrina': '200-360 mg/dL',
+            'SatTransferrina': '20-50%',
+            
+            // Valores universales
+            'VCM': '80-100 fL',
+            'CHCM': '31-36 g/dL',
+            'RDW': '11.5-14.5%',
+            'Retic': '1-2%',
+            'GB': '4.000-12.000 /μL',
+            'N': '50-66%',
+            'L': '25-33%',
+            'RAN': '2.500-7.000 /μL',
+            'RAL': '1.000-4.800 /μL',
+            'Plaq': '150.000-400.000 /μL',
+            'VHS': '≤20 mm/h',
+            'PCR': '≤3.0 mg/L',
+            'Proca': '≤0.25 ng/mL',
+            'Crea': '0.6-1.2 mg/dL',
+            'BUN': '7-18 mg/dL',
+            'Urea': '10-50 mg/dL',
+            'AcidoUrico': '3-8 mg/dL',
+            'Na': '135-145 mEq/L',
+            'K': '3.5-5.0 mEq/L',
+            'Cl': '95-105 mEq/L',
+            'P': '3-4.5 mg/dL',
+            'Ca': '8.5-10.5 mg/dL',
+            'Mg': '1.5-2.0 mg/dL',
+            'BiliT': '0.2-1.2 mg/dL',
+            'BiliD': '0.1-0.4 mg/dL',
+            'BiliI': '0.2-0.8 mg/dL',
+            'GOT': '10-40 U/L',
+            'GPT': '7-40 U/L',
+            'GGT': '6-50 U/L',
+            'FA': '60-300 U/L',
+            'Prot': '6.0-7.8 g/dL',
+            'Alb': '3.5-5.5 g/dL',
+            'Prealb': '20-40 mg/dL',
+            'INR': '0.8-1.2',
+            'PT': '11-15 seg',
+            'PTT': '25-40 seg',
+            'pH': '7.35-7.45',
+            'pCO2': '35-45 mmHg',
+            'HCO3': '22-28 mmol/L',
+            'SatO2': '95-100%'
+        };
+    }
+    
+    // Función para detectar el sexo del paciente en el texto
+    detectPatientSex(text) {
+        // Buscar patrones más específicos para el formato del laboratorio
+        const sexPatterns = [
+            // Patrón específico para el formato del laboratorio (línea independiente)
+            /Sexo:\s*\n?\s*(Hombre|Masculino|Male|M)\b/i,
+            /Sexo:\s*\n?\s*(Mujer|Femenino|Female|F)\b/i,
+            // Patrones más generales
+            /Sexo:\s*(Hombre|Masculino|Male|M)/i,
+            /Sexo:\s*(Mujer|Femenino|Female|F)/i,
+            /Género:\s*(Hombre|Masculino|Male|M)/i,
+            /Género:\s*(Mujer|Femenino|Female|F)/i,
+            /Sex:\s*(Male|M)/i,
+            /Sex:\s*(Female|F)/i,
+            // Buscar simplemente "Mujer" o "Hombre" como palabras independientes en el contexto
+            /\b(Mujer)\b/i,
+            /\b(Hombre)\b/i
+        ];
+        
+        for (const pattern of sexPatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                const sexValue = match[1].toLowerCase();
+                if (['hombre', 'masculino', 'male', 'm'].includes(sexValue)) {
+                    return 'male';
+                } else if (['mujer', 'femenino', 'female', 'f'].includes(sexValue)) {
+                    // Verificar si es embarazada
+                    if (this.detectPregnancy(text)) {
+                        return 'pregnant';
+                    }
+                    return 'female';
+                }
+            }
+        }
+        
+        // Si no se detecta, retornar null para usar valores genéricos
+        return null;
+    }
+    
+    // Función para detectar embarazo
+    detectPregnancy(text) {
+        const pregnancyPatterns = [
+            /embaraza(da|zo)/i,
+            /gestante/i,
+            /pregnant/i,
+            /pregnancy/i,
+            /semanas de gestación/i,
+            /sdg/i // semanas de gestación
+        ];
+        
+        return pregnancyPatterns.some(pattern => pattern.test(text));
+    }
+    
+    // Función para parsear rangos normales a valores numéricos
+    parseNormalRange(rangeString) {
+        if (!rangeString || typeof rangeString !== 'string') {
+            return null;
+        }
+        
+        // Remover unidades y espacios
+        const cleanRange = rangeString.replace(/[^0-9.,<>≤≥-]/g, '');
+        
+        // Patrones para diferentes tipos de rangos
+        const patterns = [
+            // Rango estándar: "2.500-7.000" o "2,500-7,000"
+            /^([0-9.,]+)-([0-9.,]+)$/,
+            // Valor máximo: "≤20" o "<20"
+            /^[≤<]([0-9.,]+)$/,
+            // Valor mínimo: "≥95" o ">95"
+            /^[≥>]([0-9.,]+)$/
+        ];
+        
+        for (const pattern of patterns) {
+            const match = cleanRange.match(pattern);
+            if (match) {
+                if (match[2]) {
+                    // Rango con min y max
+                    const min = parseFloat(match[1].replace(/,/g, ''));
+                    const max = parseFloat(match[2].replace(/,/g, ''));
+                    return { min, max, type: 'range' };
+                } else {
+                    // Solo valor máximo o mínimo
+                    const value = parseFloat(match[1].replace(/,/g, ''));
+                    if (cleanRange.includes('≤') || cleanRange.includes('<')) {
+                        return { min: 0, max: value, type: 'max' };
+                    } else {
+                        return { min: value, max: Infinity, type: 'min' };
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    // Función para verificar si un valor está fuera del rango normal
+    isValueOutOfRange(value, normalRange) {
+        const parsedRange = this.parseNormalRange(normalRange);
+        if (!parsedRange) return false;
+        
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) return false;
+        
+        return numValue < parsedRange.min || numValue > parsedRange.max;
+    }
+    
+    // Función para procesar valores alterados y agregar tooltips
+    processAlteredValues(text) {
+        const normalValues = MedicalDataExtractor.getNormalValues();
+        const patientSex = this.detectPatientSex(this.copyPasteText || text);
+        
+        // Buscar todos los valores numéricos con sus parámetros
+        return text.replace(/(\w+):\s*(\*?)([0-9.,]+)/g, (match, param, asterisk, value) => {
+            let normalRange = normalValues[param];
+            let displayRange = normalRange;
+            
+            // Si el parámetro tiene valores específicos por sexo
+            if (normalRange && typeof normalRange === 'object') {
+                if (patientSex && normalRange[patientSex]) {
+                    normalRange = normalRange[patientSex];
+                    displayRange = normalRange;
+                } else if (normalRange['male']) {
+                    // Si no se detectó el sexo, usar el rango masculino para comparación
+                    normalRange = normalRange['male'];
+                    
+                    // Mostrar ambos valores en el tooltip
+                    const maleRange = normalRange;
+                    const femaleRange = normalRange['female'] || normalRange;
+                    const pregnantRange = normalRange['pregnant'];
+                    
+                    if (pregnantRange) {
+                        displayRange = `Hombres: ${maleRange}, Mujeres: ${femaleRange}, Embarazadas: ${pregnantRange}`;
+                    } else {
+                        displayRange = `Hombres: ${maleRange}, Mujeres: ${femaleRange}`;
+                    }
+                }
+            }
+            
+            if (!normalRange || typeof normalRange === 'object') {
+                normalRange = null;
+                displayRange = 'Valor de referencia no disponible';
+            }
+            
+            // Verificar si el valor está fuera del rango normal
+            const isOutOfRange = normalRange ? this.isValueOutOfRange(value, normalRange) : false;
+            
+            // Determinar las clases CSS
+            let classes = [];
+            if (asterisk) {
+                classes.push('altered-value');
+            }
+            if (isOutOfRange) {
+                classes.push('out-of-range');
+            }
+            
+            // Construir el HTML del resultado
+            if (classes.length > 0) {
+                const classAttr = classes.join(' ');
+                const tooltip = `Valor normal: ${displayRange}`;
+                return `${param}: <span class="${classAttr}" data-tooltip="${tooltip}">${asterisk}${value}</span>`;
+            } else {
+                return match; // No cambiar si no hay asterisco ni está fuera de rango
+            }
+        });
+    }
+    
+    // Función auxiliar para obtener opciones adicionales del hemograma seleccionadas
+    getSelectedHemogramaExtraOptions() {
+        try {
+            const checkboxes = document.querySelectorAll('.hemograma-extra:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        } catch (error) {
+            console.warn('Error al obtener opciones extras del hemograma:', error);
+            return [];
+        }
+    }
+    
+    // Función para extraer opciones adicionales del hemograma
+    extractHemogramaExtraOptions(selectedOptions) {
+        let result = '';
+        
+        // VCM - Buscar patrón: "VCM-Volumen Corpuscular Medio 88.6 fL"
+        if (selectedOptions.includes('VCM')) {
+            let vcmMatch = this.copyPasteText.match(/VCM[\s\S]*?Corpuscular\s+Medio\s*\*?\s*(\d+\.?\d*)\s*fL/i);
+            if (vcmMatch) {
+                result += `VCM: ${vcmMatch[1]}, `;
+            }
+        }
+        
+        // CHCM - Buscar patrón: "CHCM-Conc.Hb Corpuscular Media 32.6 g / dl"
+        if (selectedOptions.includes('CHCM')) {
+            let chcmMatch = this.copyPasteText.match(/CHCM[\s\S]*?Corpuscular\s+Media\s*\*?\s*(\d+\.?\d*)\s*g\s*\/\s*dl/i);
+            if (chcmMatch) {
+                result += `CHCM: ${chcmMatch[1]}, `;
+            }
+        }
+        
+        // RDW - Buscar patrón: "RDW 14.1 %"
+        if (selectedOptions.includes('RDW')) {
+            let rdwMatch = this.copyPasteText.match(/RDW\s*\*?\s*(\d+\.?\d*)\s*%/i);
+            if (rdwMatch) {
+                result += `RDW: ${rdwMatch[1]}, `;
+            }
+        }
+        
+        // Reticulocitos - Buscar patrón: "Reticulocitos * 2.5 %"
+        if (selectedOptions.includes('Reticulocitos')) {
+            let retMatch = this.copyPasteText.match(/Reticulocitos\s*\*?\s*(\d+\.?\d*)\s*%/i);
+            if (retMatch) {
+                result += `Retic: ${retMatch[1]}, `;
+            }
+        }
+        
+        // RAN - Buscar patrón: "Neutrófilos 11.6 10e3/uL" y multiplicar por 1000
+        if (selectedOptions.includes('RAN')) {
+            let ranMatch = this.copyPasteText.match(/Neutrófilos\s*\*?\s*(\d+\.?\d*)\s*10e3\/uL/i);
+            if (ranMatch) {
+                const ranValue = (parseFloat(ranMatch[1]) * 1000).toFixed(0);
+                result += `RAN: ${ranValue}, `;
+            }
+        }
+        
+        // RAL - Buscar patrón: "Linfocitos 2.57 10e3/uL" y multiplicar por 1000
+        if (selectedOptions.includes('RAL')) {
+            let ralMatch = this.copyPasteText.match(/Linfocitos\s*\*?\s*(\d+\.?\d*)\s*10e3\/uL/i);
+            if (ralMatch) {
+                const ralValue = (parseFloat(ralMatch[1]) * 1000).toFixed(0);
+                result += `RAL: ${ralValue}, `;
+            }
+        }
+        
+        return result;
+    }
+    
 
     // Extracción de Hemograma + PCR (optimizado para formato específico del laboratorio)
     extractHemograma() {
         if (!this.copyPasteText) return '';
 
         let result = '';
+        const selectedExtraOptions = this.getSelectedHemogramaExtraOptions();
 
         // Hemoglobina - Buscar patrón específico: "Hemoglobina * 9.7 g/dL"
         let hbMatch = this.copyPasteText.match(/Hemoglobina\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i);
-        if (hbMatch) {
+        // Hematocrito - Buscar patrón: "Hematocrito * 34.1 %"
+        let hctoMatch = this.copyPasteText.match(/Hematocrito\s*(\*?)\s*(\d+\.?\d*)\s*%/i);
+        
+        if (hbMatch && hctoMatch && selectedExtraOptions.includes('Hcto')) {
+            const hbHasAsterisk = hbMatch[1] === '*';
+            const hbValue = hbHasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
+            const hctoHasAsterisk = hctoMatch[1] === '*';
+            const hctoValue = hctoHasAsterisk ? `*${hctoMatch[2]}` : hctoMatch[2];
+            result += `Hb/Hcto: ${hbValue}/${hctoValue}, `;
+        } else if (hbMatch) {
             const hasAsterisk = hbMatch[1] === '*';
             const value = hasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
             result += `Hb: ${value}, `;
@@ -119,7 +432,14 @@ class MedicalDataExtractor {
 
         // % de Neutrófilos - Buscar patrón: "Neutrófilos % * 72.4 %"
         let neutMatch = this.copyPasteText.match(/Neutrófilos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
-        if (neutMatch) {
+        // % de Linfocitos - Buscar patrón: "Linfocitos % * 16.2 %"
+        let linfMatch = this.copyPasteText.match(/Linfocitos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
+        
+        if (neutMatch && linfMatch && selectedExtraOptions.includes('Linfocitos')) {
+            const neutRounded = Math.round(parseFloat(neutMatch[1]));
+            const linfRounded = Math.round(parseFloat(linfMatch[1]));
+            result += `(N: ${neutRounded}%, L: ${linfRounded}%), `;
+        } else if (neutMatch) {
             const neutRounded = Math.round(parseFloat(neutMatch[1]));
             result += `(N: ${neutRounded}%), `;
         }
@@ -130,17 +450,8 @@ class MedicalDataExtractor {
             result += `Plq: ${plqMatch[1]}.000, `;
         }
 
-        // PCR - Buscar patrón: "Proteína C Reactiva * 156.0 mg/L"
-        let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
-        if (pcrMatch) {
-            result += `PCR: ${pcrMatch[1]}, `;
-        }
-
-        // Procalcitonina
-        let procaMatch = this.copyPasteText.match(/Procalcitonina\s*\*?\s*(\d+\.?\d*)\s+ng\/mL/i);
-        if (procaMatch) {
-            result += `Proca: ${procaMatch[1]}, `;
-        }
+        // Opciones adicionales
+        result += this.extractHemogramaExtraOptions(selectedExtraOptions);
 
         return this.cleanAsterisks(result);
     }
@@ -165,6 +476,14 @@ class MedicalDataExtractor {
             const bunValue = this.extractMatch(bunMatch, /(\*?\s*\d+\.?\d*)\s+mg/);
             const bunNumber = this.extractMatch(bunValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             values.push(`BUN: ${bunNumber}`);
+        }
+
+        // Urea
+        const ureaMatch = this.extractMatch(this.copyPasteText, /Urea[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (ureaMatch) {
+            const ureaValue = this.extractMatch(ureaMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            const ureaNumber = this.extractMatch(ureaValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            values.push(`Urea: ${ureaNumber}`);
         }
 
         // ELP: Sodio/Potasio/Cloro
@@ -199,6 +518,14 @@ class MedicalDataExtractor {
             const caValue = this.extractMatch(caMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
             const caNumber = this.extractMatch(caValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
             values.push(`Ca: ${caNumber}`);
+        }
+
+        // Magnesio
+        const mgMatch = this.extractMatch(this.copyPasteText, /Magnesio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (mgMatch) {
+            const mgValue = this.extractMatch(mgMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            const mgNumber = this.extractMatch(mgValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            values.push(`Mg: ${mgNumber}`);
         }
 
         const result = values.length > 0 ? values.join(', ') + ', ' : '';
@@ -316,6 +643,34 @@ class MedicalDataExtractor {
         return this.cleanAsterisks(result);
     }
 
+    // Extracción de PCR, Proca & VHS
+    extractPCR() {
+        if (!this.copyPasteText) return '';
+
+        let values = [];
+
+        // PCR - Buscar patrón: "Proteína C Reactiva * 156.0 mg/L"
+        let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
+        if (pcrMatch) {
+            values.push(`PCR: ${pcrMatch[1]}`);
+        }
+
+        // Procalcitonina - Buscar patrón: "Procalcitonina * 0.25 ng/mL"
+        let procaMatch = this.copyPasteText.match(/Procalcitonina\s*\*?\s*(\d+\.?\d*)\s+ng\/mL/i);
+        if (procaMatch) {
+            values.push(`Proca: ${procaMatch[1]}`);
+        }
+
+        // VHS - Buscar patrón: "VHS * 85 mm/hr" o "Velocidad de Sedimentación"
+        let vhsMatch = this.copyPasteText.match(/(?:VHS|Velocidad\s+de\s+Sedimentación)\s*\*?\s*(\d+\.?\d*)\s*mm\/hr?/i);
+        if (vhsMatch) {
+            values.push(`VHS: ${vhsMatch[1]}`);
+        }
+
+        const result = values.length > 0 ? values.join(', ') + ', ' : '';
+        return this.cleanAsterisks(result);
+    }
+
     // Extracción de Gases en Sangre
     extractGases() {
         if (!this.copyPasteText) return '';
@@ -390,10 +745,31 @@ class MedicalDataExtractor {
             valores.Plaq = plqMatch[1] + '.000';
         }
         
+        return valores;
+    }
+    
+    // Extracción detallada de PCR, Proca & VHS
+    extractPCRDetallado() {
+        if (!this.copyPasteText) return {};
+        
+        const valores = {};
+        
         // PCR
         let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
         if (pcrMatch) {
             valores.PCR = pcrMatch[1];
+        }
+        
+        // Procalcitonina
+        let procaMatch = this.copyPasteText.match(/Procalcitonina\s*\*?\s*(\d+\.?\d*)\s+ng\/mL/i);
+        if (procaMatch) {
+            valores.Proca = procaMatch[1];
+        }
+        
+        // VHS
+        let vhsMatch = this.copyPasteText.match(/(?:VHS|Velocidad\s+de\s+Sedimentación)\s*\*?\s*(\d+\.?\d*)\s*mm\/hr?/i);
+        if (vhsMatch) {
+            valores.VHS = vhsMatch[1];
         }
         
         return valores;
@@ -417,6 +793,13 @@ class MedicalDataExtractor {
         if (bunMatch) {
             const bunValue = this.extractMatch(bunMatch, /(\*?\s*\d+\.?\d*)\s+mg/);
             valores.BUN = this.extractMatch(bunValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Urea
+        const ureaMatch = this.extractMatch(this.copyPasteText, /Urea[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (ureaMatch) {
+            const ureaValue = this.extractMatch(ureaMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.Urea = this.extractMatch(ureaValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
         }
         
         // Sodio
@@ -452,6 +835,13 @@ class MedicalDataExtractor {
         if (caMatch) {
             const caValue = this.extractMatch(caMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
             valores.Ca = this.extractMatch(caValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        }
+        
+        // Magnesio
+        const mgMatch = this.extractMatch(this.copyPasteText, /Magnesio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+        if (mgMatch) {
+            const mgValue = this.extractMatch(mgMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
+            valores.Mg = this.extractMatch(mgValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
         }
         
         return valores;
@@ -775,6 +1165,11 @@ class MedicalDataExtractor {
             if (nutricional) results.push(nutricional);
         }
 
+        if (selectedOptions.includes('PCR')) {
+            const pcr = this.extractPCR();
+            if (pcr) results.push(pcr);
+        }
+
         if (selectedOptions.includes('Gases')) {
             const gases = this.extractGases();
             if (gases) results.push(gases);
@@ -783,48 +1178,112 @@ class MedicalDataExtractor {
         return results.join('\n');
     }
 
-    // Función para dividir el texto por F. Registro:
+    // Función para dividir el texto por Nº Petición:
     splitExamenesByRegistro(text) {
-        // Dividir por el patrón "F. Registro:"
-        const examenes = [];
-        const matches = [];
+        // Buscar todos los números de petición únicos
+        const peticionesUnicas = new Set();
+        const peticionPattern = /Nº Petición:\s*(\d+)/g;
         let match;
         
-        // Buscar todas las ocurrencias de "F. Registro:"
+        while ((match = peticionPattern.exec(text)) !== null) {
+            peticionesUnicas.add(match[1]);
+        }
+        
+        // Si hay múltiples peticiones DIFERENTES, dividir por ellas
+        if (peticionesUnicas.size > 1) {
+            const examenes = [];
+            
+            // Dividir el texto por cada ocurrencia de "Nº Petición:"
+            const allMatches = [];
+            const allPeticionPattern = /Nº Petición:/g;
+            let match;
+            
+            while ((match = allPeticionPattern.exec(text)) !== null) {
+                allMatches.push(match.index);
+            }
+            
+            // Crear fragmentos y agrupar por número de petición
+            const fragmentosPorPeticion = new Map();
+            
+            for (let i = 0; i < allMatches.length; i++) {
+                const start = allMatches[i];
+                const end = allMatches[i + 1] || text.length;
+                const fragment = text.substring(start, end).trim();
+                
+                // Extraer el número de petición de este fragmento
+                const numeroMatch = fragment.match(/Nº Petición:\s*(\d+)/);
+                if (numeroMatch) {
+                    const numeroPeticion = numeroMatch[1];
+                    if (!fragmentosPorPeticion.has(numeroPeticion)) {
+                        fragmentosPorPeticion.set(numeroPeticion, []);
+                    }
+                    fragmentosPorPeticion.get(numeroPeticion).push(fragment);
+                }
+            }
+            
+            // Unir fragmentos por petición
+            fragmentosPorPeticion.forEach((fragments, numeroPeticion) => {
+                const contenidoCompleto = fragments.join('\n\n').trim();
+                if (contenidoCompleto.length > 100) {
+                    examenes.push(contenidoCompleto);
+                }
+            });
+            
+            return examenes;
+        }
+        
+        // Si solo hay una petición o ninguna, intentar dividir por "F. Registro:" pero solo si hay múltiples fechas muy separadas
+        const registroMatches = [];
         const registroPattern = /F\. Registro:/g;
         while ((match = registroPattern.exec(text)) !== null) {
-            matches.push(match.index);
+            registroMatches.push(match.index);
         }
         
-        // Si no hay "F. Registro:", devolver el texto completo
-        if (matches.length === 0) {
-            return [text];
-        }
-        
-        // Dividir el texto en fragmentos
-        for (let i = 0; i < matches.length; i++) {
-            const start = matches[i];
-            const end = matches[i + 1] || text.length;
-            const fragment = text.substring(start, end).trim();
+        // Solo dividir por F. Registro si hay múltiples registros MUY separados (más de 2000 caracteres)
+        if (registroMatches.length > 1) {
+            let shouldSplit = false;
+            for (let i = 1; i < registroMatches.length; i++) {
+                const distance = registroMatches[i] - registroMatches[i-1];
+                if (distance > 2000) {
+                    shouldSplit = true;
+                    break;
+                }
+            }
             
-            if (fragment.length > 100) { // Solo incluir fragmentos significativos
-                examenes.push(fragment);
+            if (shouldSplit) {
+                const examenes = [];
+                for (let i = 0; i < registroMatches.length; i++) {
+                    const start = registroMatches[i];
+                    const end = registroMatches[i + 1] || text.length;
+                    const fragment = text.substring(start, end).trim();
+                    
+                    if (fragment.length > 100) {
+                        examenes.push(fragment);
+                    }
+                }
+                return examenes;
             }
         }
         
-        return examenes.length > 0 ? examenes : [text];
+        // Si no se debe dividir, devolver el texto completo
+        return [text];
     }
     
     // Función para extraer fecha de un examen específico
     extractFechaFromExamen(examenText) {
         if (!examenText) return null;
         
-        // Buscar fecha en "F. Registro: dd/mm/yyyy"
-        let fechaMatch = this.extractMatch(examenText, /F\. Registro:\s*(\d{2}\/\d{2}\/\d{4})/);
+        // Buscar la primera fecha que aparece después de "Nº Petición:"
+        const peticionMatch = examenText.match(/Nº Petición:[\s\S]*?F\. Registro:\s*(\d{2}\/\d{2}\/\d{4})/);
+        if (peticionMatch) {
+            const fechaCompleta = peticionMatch[1];
+            return fechaCompleta.substring(0, 5);
+        }
         
+        // Si no encuentra el patrón con Nº Petición, buscar F. Registro al inicio
+        let fechaMatch = this.extractMatch(examenText, /F\. Registro:\s*(\d{2}\/\d{2}\/\d{4})/);
         if (fechaMatch) {
             const fechaCompleta = this.extractMatch(fechaMatch, /\d{2}\/\d{2}\/\d{4}/);
-            // Devolver formato dd/mm
             return fechaCompleta.substring(0, 5);
         }
         
@@ -884,9 +1343,17 @@ class MedicalDataExtractor {
             const bunMatch = fragmentText.match(/BUN:\s*(\*?\d+\.?\d*)/i);
             if (bunMatch) valoresEncontrados.push(`BUN: ${bunMatch[1]}`);
             
+            // Buscar Urea: Urea: xx.x
+            const ureaMatch = fragmentText.match(/Urea:\s*(\*?\d+\.?\d*)/i);
+            if (ureaMatch) valoresEncontrados.push(`Urea: ${ureaMatch[1]}`);
+            
             // Buscar ELP: ELP: xxx/x.x/xxx
             const elpMatch = fragmentText.match(/ELP:\s*(\*?\d+\/\*?\d+\.?\d*\/\*?\d+)/i);
             if (elpMatch) valoresEncontrados.push(`ELP: ${elpMatch[1]}`);
+            
+            // Buscar Magnesio: Mg: x.x
+            const mgMatch = fragmentText.match(/Mg:\s*(\*?\d+\.?\d*)/i);
+            if (mgMatch) valoresEncontrados.push(`Mg: ${mgMatch[1]}`);
         }
         
         if (selectedOptions.includes('Nutricional')) {
@@ -920,9 +1387,14 @@ class MedicalDataExtractor {
 
         // Detectar si hay múltiples exámenes por F. Registro:
         const registroMatches = copyPasteText.match(/F\. Registro:/g);
+        const peticionMatches = copyPasteText.match(/Nº Petición:/g);
+        
+        console.log('Registros encontrados:', registroMatches ? registroMatches.length : 0);
+        console.log('Peticiones encontradas:', peticionMatches ? peticionMatches.length : 0);
         
         // Si solo hay un examen o ninguno, procesarlo normalmente
         if (!registroMatches || registroMatches.length <= 1) {
+            console.log('Procesando como un solo examen');
             return this.processSingleExamen(copyPasteText, selectedOptions);
         }
         
@@ -952,8 +1424,9 @@ class MedicalDataExtractor {
 
         // Definir exámenes específicos por parámetro
         const EXAMENES_ESPECIFICOS = {
-            'Hemograma': ['Hb', 'GB', 'N%', 'Plaq', 'PCR'],
-            'Renal': ['Crea', 'BUN', 'Na', 'K', 'Cl', 'P', 'Ca'],
+            'Hemograma': ['Hb', 'GB', 'N%', 'Plaq'],
+            'PCR': ['PCR', 'Proca', 'VHS'],
+            'Renal': ['Crea', 'BUN', 'Urea', 'Na', 'K', 'Cl', 'P', 'Ca', 'Mg'],
             'Hepático': ['BiliT', 'BiliD', 'GOT', 'GPT', 'FA', 'GGT'],
             'Nutricional': ['Prot', 'Alb', 'Prealb'],
             'Coagulación': ['INR', 'PT', 'PTT'],
@@ -980,6 +1453,15 @@ class MedicalDataExtractor {
                 Object.keys(valoresHemo).forEach(examen => {
                     if (mapResultadosPorExamen.has(examen) && valoresHemo[examen]) {
                         mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresHemo[examen]);
+                    }
+                });
+            }
+            
+            if (selectedOptions.includes('PCR')) {
+                const valoresPCR = this.extractPCRDetallado();
+                Object.keys(valoresPCR).forEach(examen => {
+                    if (mapResultadosPorExamen.has(examen) && valoresPCR[examen]) {
+                        mapResultadosPorExamen.get(examen).set(fechaExtraida, valoresPCR[examen]);
                     }
                 });
             }
@@ -1047,6 +1529,13 @@ class MedicalDataExtractor {
                 }
             }
             
+            if (selectedOptions.includes('PCR')) {
+                const pcr = this.extractPCR();
+                if (pcr && pcr.trim()) {
+                    valoresExamen.push(pcr.trim());
+                }
+            }
+            
             if (selectedOptions.includes('Renal')) {
                 const renal = this.extractRenal();
                 if (renal && renal.trim()) {
@@ -1105,12 +1594,21 @@ class MedicalDataExtractor {
             tablaHTML.push('<tbody>');
 
             mapResultadosPorExamen.forEach((fechaMap, examen) => {
-                tablaHTML.push(`<tr><td>${examen}</td>`);
-                fechas.forEach(fecha => {
+                // Verificar si todos los valores de esta fila están vacíos
+                const valoresNoVacios = fechas.some(fecha => {
                     const valor = fechaMap.get(fecha) || '-';
-                    tablaHTML.push(`<td>${valor}</td>`);
+                    return valor !== '-' && valor.trim() !== '';
                 });
-                tablaHTML.push('</tr>');
+                
+                // Solo agregar la fila si tiene al menos un valor no vacío
+                if (valoresNoVacios) {
+                    tablaHTML.push(`<tr><td>${examen}</td>`);
+                    fechas.forEach(fecha => {
+                        const valor = fechaMap.get(fecha) || '-';
+                        tablaHTML.push(`<td>${valor}</td>`);
+                    });
+                    tablaHTML.push('</tr>');
+                }
             });
 
             tablaHTML.push('</tbody></table>');
@@ -1228,7 +1726,16 @@ function autoExtract() {
         const result = extractor.processSelection(copyPasteText, selectedOptions);
         
         if (result.trim()) {
-            resultsDiv.textContent = result;
+            // Debug: Detectar sexo del paciente
+            extractor.copyPasteText = copyPasteText;
+            const detectedSex = extractor.detectPatientSex(copyPasteText);
+            console.log('Sexo detectado:', detectedSex);
+            
+            // Procesar valores alterados con tooltips
+            const processedResult = extractor.processAlteredValues(result);
+            // Convertir saltos de línea a <br> para HTML
+            const htmlResult = processedResult.replace(/\n/g, '<br>');
+            resultsDiv.innerHTML = htmlResult;
             resultsDiv.style.display = 'block';
             resultsStatus.style.display = 'none';
             copyArea.style.display = 'flex';
@@ -1256,8 +1763,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsDiv = document.getElementById('results');
 
     // Event listeners para extracción automática
-    // Detectar cambios en checkboxes
+    // Detectar cambios en checkboxes (incluyendo los del desplegable)
     document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', autoExtract);
+    });
+    
+    // Agregar listeners específicos para checkboxes del desplegable
+    document.querySelectorAll('.hemograma-extra').forEach(checkbox => {
         checkbox.addEventListener('change', autoExtract);
     });
     
@@ -1276,7 +1788,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Botón seleccionar todo
     selectAllBtn.addEventListener('click', function() {
         document.querySelectorAll('.selection-checkbox').forEach(cb => {
-            if (cb.value !== 'Talcual') { // No seleccionar "Tal cual" automáticamente
+            // Excluir "Tal cual" y los elementos del submenú de hemograma
+            if (cb.value !== 'Talcual' && !cb.classList.contains('hemograma-extra')) {
                 cb.checked = true;
             }
         });
@@ -1358,6 +1871,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ejecutar autoExtract inicial para mostrar el estado por defecto
     autoExtract();
     
+    // Inicializar funcionalidad del desplegable de hemograma
+    initializeHemogramaDropdown();
+    
     // Funcionalidad para botones de acción de la tabla
     const downloadImageBtn = document.getElementById('downloadImageBtn');
     
@@ -1402,6 +1918,107 @@ document.addEventListener('DOMContentLoaded', function() {
         }).finally(() => {
             downloadImageBtn.disabled = false;
             downloadImageBtn.innerHTML = '<span class="copy-icon">📸</span><span class="copy-text">Descargar como Imagen</span>';
+        });
+    });
+    
+    // Descargar tabla como PDF
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    
+    downloadPdfBtn.addEventListener('click', function() {
+        const tableContainer = document.querySelector('.comparative-table-container');
+        const table = tableContainer.querySelector('.comparative-table');
+        
+        if (!table) {
+            showNotification('No hay tabla para descargar', 'error');
+            return;
+        }
+        
+        downloadPdfBtn.disabled = true;
+        downloadPdfBtn.innerHTML = '<span class="copy-icon">⏳</span><span class="copy-text">Generando PDF...</span>';
+        
+        // Configurar html2canvas para mejor calidad
+        html2canvas(table, {
+            scale: 2, // Mayor resolución
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            scrollX: 0,
+            scrollY: 0,
+            width: table.scrollWidth,
+            height: table.scrollHeight
+        }).then(canvas => {
+            // Crear PDF con jsPDF
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait', // Orientación vertical
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Dimensiones del PDF (A4 vertical)
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            // Márgenes de 15 mm por lado
+            const margin = 15;
+            const availableWidth = pdfWidth - (margin * 2);
+            const availableHeight = pdfHeight - (margin * 2);
+            
+            // Dimensiones del canvas
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            
+            // Calcular escala para ajustar la imagen al área disponible (con márgenes)
+            const scaleX = availableWidth / canvasWidth;
+            const scaleY = availableHeight / canvasHeight;
+            const scale = Math.min(scaleX, scaleY);
+            
+            // Dimensiones finales de la imagen en el PDF
+            const imgWidth = canvasWidth * scale;
+            const imgHeight = canvasHeight * scale;
+            
+            // Centrar la imagen en el área disponible (considerando márgenes)
+            const x = margin + (availableWidth - imgWidth) / 2;
+            const y = margin + (availableHeight - imgHeight) / 2;
+            
+            // Convertir canvas a imagen y añadirla al PDF
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+            
+            // Abrir el PDF en una nueva ventana
+            const pdfBlob = pdf.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            
+            // Crear nombre del archivo
+            const fileName = `tabla-comparativa-${new Date().toISOString().split('T')[0]}.pdf`;
+            
+            // Abrir en nueva pestaña
+            const newWindow = window.open(pdfUrl, '_blank');
+            
+            // Verificar si la ventana se abrió correctamente
+            if (newWindow) {
+                // Opcional: limpiar la URL después de un tiempo
+                setTimeout(() => {
+                    URL.revokeObjectURL(pdfUrl);
+                }, 1000);
+                showNotification('PDF abierto en nueva pestaña', 'success');
+            } else {
+                // Si el navegador bloqueó la ventana emergente, ofrecer descarga como alternativa
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = pdfUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(pdfUrl);
+                showNotification('PDF descargado (ventana emergente bloqueada)', 'success');
+            }
+        }).catch(error => {
+            console.error('Error al generar PDF:', error);
+            showNotification('Error al generar el PDF', 'error');
+        }).finally(() => {
+            downloadPdfBtn.disabled = false;
+            downloadPdfBtn.innerHTML = '<span class="copy-icon">📄</span><span class="copy-text">Generar PDF</span>';
         });
     });
     
@@ -1844,4 +2461,118 @@ function generateStandaloneTableHTML(table) {
     </div>
 </body>
 </html>`;
+}
+
+// Funcionalidad del desplegable de hemograma
+function initializeHemogramaDropdown() {
+    console.log('=== INICIANDO DESPLEGABLE DE HEMOGRAMA ===');
+    
+    const dropdownToggle = document.querySelector('.dropdown-toggle-inline');
+    const dropdownContent = document.getElementById('hemograma-dropdown');
+    
+    console.log('Botón desplegable encontrado:', !!dropdownToggle);
+    console.log('Contenido desplegable encontrado:', !!dropdownContent);
+    
+    if (dropdownToggle) {
+        console.log('Elemento del botón:', dropdownToggle);
+        console.log('Atributos del botón:', dropdownToggle.attributes);
+    }
+    
+    if (dropdownContent) {
+        console.log('Elemento del contenido:', dropdownContent);
+        console.log('Clases del contenido:', dropdownContent.classList);
+    }
+    
+    if (!dropdownToggle || !dropdownContent) {
+        console.error('FALLA: No se encontraron elementos del desplegable');
+        console.log('Todos los elementos con clase dropdown-toggle-inline:', document.querySelectorAll('.dropdown-toggle-inline'));
+        console.log('Todos los elementos con ID hemograma-dropdown:', document.querySelectorAll('#hemograma-dropdown'));
+        return;
+    }
+    
+    console.log('Agregando event listener al botón desplegable...');
+    
+    // Evento para abrir/cerrar desplegable
+    dropdownToggle.addEventListener('click', function(e) {
+        console.log('=== CLIC EN BOTÓN DESPLEGABLE ===');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isOpen = dropdownContent.classList.contains('show');
+        console.log('Estado actual - isOpen:', isOpen);
+        console.log('Clases del contenido antes:', Array.from(dropdownContent.classList));
+        
+        if (isOpen) {
+            dropdownContent.classList.remove('show');
+            dropdownToggle.classList.remove('active');
+            console.log('✓ Desplegable cerrado');
+        } else {
+            dropdownContent.classList.add('show');
+            dropdownToggle.classList.add('active');
+            console.log('✓ Desplegable abierto');
+        }
+        
+        console.log('Clases del contenido después:', Array.from(dropdownContent.classList));
+        console.log('Clases del botón después:', Array.from(dropdownToggle.classList));
+    });
+    
+    // Test adicional: agregar un listener simple para verificar que funciona
+    dropdownToggle.addEventListener('mouseenter', function() {
+        console.log('Mouse entró en el botón desplegable');
+    });
+    
+    // Cerrar desplegable al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!dropdownToggle.contains(e.target) && !dropdownContent.contains(e.target)) {
+            dropdownContent.classList.remove('show');
+            dropdownToggle.classList.remove('active');
+            console.log('Desplegable cerrado por clic fuera');
+        }
+    });
+    
+    // Prevenir cierre del desplegable al hacer clic dentro
+    dropdownContent.addEventListener('click', function(e) {
+        e.stopPropagation();
+        console.log('Clic dentro del desplegable - propagación detenida');
+    });
+    
+    // Agregar event listeners a las opciones adicionales
+    const hemogramaExtraCheckboxes = document.querySelectorAll('.hemograma-extra');
+    console.log('Checkboxes extras encontrados:', hemogramaExtraCheckboxes.length);
+    hemogramaExtraCheckboxes.forEach((checkbox, index) => {
+        console.log(`Checkbox ${index}:`, checkbox.value);
+        checkbox.addEventListener('change', autoExtract);
+    });
+    
+    // Agregar funcionalidad a los botones del dropdown
+    const selectAllHemogramaBtn = document.getElementById('selectAllHemogramaBtn');
+    const clearAllHemogramaBtn = document.getElementById('clearAllHemogramaBtn');
+    
+    if (selectAllHemogramaBtn) {
+        selectAllHemogramaBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('Seleccionando todos los parámetros adicionales de hemograma');
+            
+            hemogramaExtraCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            autoExtract();
+        });
+    }
+    
+    if (clearAllHemogramaBtn) {
+        clearAllHemogramaBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('Borrando todos los parámetros adicionales de hemograma');
+            
+            hemogramaExtraCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            autoExtract();
+        });
+    }
+    
+    console.log('=== INICIALIZACIÓN COMPLETA ===');
 }

@@ -133,6 +133,7 @@ body {
     padding: 14px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.02);
     border: 1px solid #e5e5e5;
+    overflow: visible;
 }
 
 .step-card h2 {
@@ -339,6 +340,8 @@ body {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
     margin-bottom: 16px;
+    overflow: visible;
+    position: relative;
 }
 
 .selection-item-compact {
@@ -1014,4 +1017,305 @@ footer {
     z-index: 10;
     background: transparent;
     clear: both;
+}
+
+/* Estilos para valores alterados */
+.altered-value {
+    text-decoration: underline;
+    text-decoration-color: #ef4444;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+    position: relative;
+    cursor: help;
+}
+
+/* Estilos para valores fuera de rango */
+.out-of-range {
+    position: relative;
+    text-decoration: underline;
+    text-decoration-color: #dc3545;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+    cursor: help;
+}
+
+.out-of-range:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: tooltipFadeIn 0.2s ease-out;
+    max-width: 300px;
+    min-width: max-content;
+}
+
+/* Flecha del tooltip para valores fuera de rango */
+.out-of-range:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(1px);
+    border: 5px solid transparent;
+    border-top-color: #1f2937;
+    z-index: 1000;
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+/* Tooltip para valores alterados */
+.altered-value[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: tooltipFadeIn 0.2s ease-out;
+    max-width: 300px;
+    min-width: max-content;
+}
+
+/* Flecha del tooltip */
+.altered-value[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(1px);
+    border: 5px solid transparent;
+    border-top-color: #1f2937;
+    z-index: 1000;
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Ajustes para que el tooltip no se vea cortado en el borde */
+.results-content {
+    position: relative;
+    overflow: visible;
+}
+
+/* En responsive, ajustar el tooltip */
+@media (max-width: 768px) {
+    .altered-value[data-tooltip]:hover::after {
+        font-size: 11px;
+        padding: 6px 10px;
+        max-width: 200px;
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+/* Estilos para el desplegable de hemograma */
+.selection-item-with-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    grid-column: span 1;
+    z-index: 10;
+    overflow: visible;
+}
+
+.hemograma-with-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.dropdown-toggle-inline {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    color: #6b7280;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.dropdown-toggle-inline:hover {
+    background: rgba(0, 0, 0, 0.08);
+    opacity: 1;
+}
+
+.dropdown-toggle-inline svg {
+    transition: transform 0.2s;
+}
+
+.dropdown-toggle-inline.active svg {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    margin-top: 4px;
+    padding: 8px;
+    animation: slideDown 0.2s ease-out;
+    min-width: 280px;
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 4px 10px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 8px;
+}
+
+.dropdown-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.dropdown-utility-button {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-utility-button:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.dropdown-utility-button:active {
+    transform: translateY(0);
+}
+
+.dropdown-content.show {
+    display: block !important;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 13px;
+}
+
+.dropdown-item:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.dropdown-item .selection-label-compact {
+    font-size: 13px;
+    color: #374151;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dropdown-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dropdown-content {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        top: auto;
+        bottom: 10px;
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+    
+    .selection-item-with-dropdown {
+        grid-column: span 1;
+    }
+    
+    .selection-grid-compact {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .selection-grid-compact {
+        grid-template-columns: 1fr;
+    }
 }
