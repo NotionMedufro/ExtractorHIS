@@ -77,7 +77,7 @@ class MedicalDataExtractor {
         this.selectedOptions = [];
     }
 
-    // Función auxiliar para extraer usando regex con lookbehind y lookahead
+    // Función auxiliar para extraer usando expresiones regulares
     extractMatch(text, pattern, flags = 'gi') {
         try {
             const regex = new RegExp(pattern, flags);
@@ -89,9 +89,38 @@ class MedicalDataExtractor {
         }
     }
 
+    // Función para actualizar patrones de extracción
+    updatePatterns(newPatterns) {
+        this.patterns = { ...this.defaultPatterns, ...newPatterns };
+    }
+
+    // Patrones de extracción por defecto
+    defaultPatterns = {
+        bilirubin: 'Bilirrubina Directa\\s*([0-9.]+)\\s*mg/dL',
+        glucose: 'Glucosa\\s*\\*?\\s*([0-9.]+)\\s*mg/dL',
+        urea: 'Urea\\s*\\*?\\s*([0-9.]+)\\s*mg/dL',
+        creatinine: 'Creatinina\\s*([0-9.]+)\\s*mg/dL',
+        hemoglobin: 'Hemoglobina\\s*\\*?\\s*([0-9.]+)\\sg/dL'
+    };
+
     // Función auxiliar para reemplazar asteriscos
     cleanAsterisks(text) {
         return text.replace(/\* /g, '*');
+    }
+    
+    // Función para formatear valores numéricos (redondear según necesidad)
+    formatValue(value) {
+        if (!value) return value;
+        
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) return value;
+        
+        // Si el número es menor que 10 y tiene decimales, mantener 1 decimal
+        if (numValue < 10 && numValue % 1 !== 0) {
+            return numValue.toFixed(1);
+        }
+        // Si es mayor o igual a 10, redondear a entero
+        return Math.round(numValue).toString();
     }
     
     // Valores normales de referencia
@@ -376,18 +405,18 @@ class MedicalDataExtractor {
             }
         }
         
-        // RAN - Buscar patrón: "Neutrófilos 11.6 10e3/uL" y multiplicar por 1000
+        // RAN - Buscar patrón: "Neutrófilos 11.6 10e3/uL" o "NEUTROFILOS 2.02 10^3/uL" y multiplicar por 1000
         if (selectedOptions.includes('RAN')) {
-            let ranMatch = this.copyPasteText.match(/Neutrófilos\s*\*?\s*(\d+\.?\d*)\s*10e3\/uL/i);
+            let ranMatch = this.copyPasteText.match(/NEUTROFILOS\s*\*?\s*(\d+\.?\d*)\s*(?:10\^3|10e3)\/uL/i);
             if (ranMatch) {
                 const ranValue = (parseFloat(ranMatch[1]) * 1000).toFixed(0);
                 result += `RAN: ${ranValue}, `;
             }
         }
         
-        // RAL - Buscar patrón: "Linfocitos 2.57 10e3/uL" y multiplicar por 1000
+        // RAL - Buscar patrón: "Linfocitos 2.57 10e3/uL" o "LINFOCITOS 3.02 10^3/uL" y multiplicar por 1000
         if (selectedOptions.includes('RAL')) {
-            let ralMatch = this.copyPasteText.match(/Linfocitos\s*\*?\s*(\d+\.?\d*)\s*10e3\/uL/i);
+            let ralMatch = this.copyPasteText.match(/LINFOCITOS\s*\*?\s*(\d+\.?\d*)\s*(?:10\^3|10e3)\/uL/i);
             if (ralMatch) {
                 const ralValue = (parseFloat(ralMatch[1]) * 1000).toFixed(0);
                 result += `RAL: ${ralValue}, `;
@@ -405,47 +434,47 @@ class MedicalDataExtractor {
         let result = '';
         const selectedExtraOptions = this.getSelectedHemogramaExtraOptions();
 
-        // Hemoglobina - Buscar patrón específico: "Hemoglobina * 9.7 g/dL"
-        let hbMatch = this.copyPasteText.match(/Hemoglobina\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i);
-        // Hematocrito - Buscar patrón: "Hematocrito * 34.1 %"
-        let hctoMatch = this.copyPasteText.match(/Hematocrito\s*(\*?)\s*(\d+\.?\d*)\s*%/i);
+        // Hemoglobina - Buscar patrón específico: "Hemoglobina * 9.7 g/dL" o "HEMOGLOBINA 10.00 g/dL"
+        let hbMatch = this.copyPasteText.match(/HEMOGLOBINA\s*([hi]?\s*\d+\.?\d*)\s+g\/dL/i);
+        // Hematocrito - Buscar patrón: "Hematocrito * 34.1 %" o "HEMATOCRITO 30.00 %"
+        let hctoMatch = this.copyPasteText.match(/HEMATOCRITO\s*([hi]?\s*\d+\.?\d*)\s*%/i);
         
         if (hbMatch && hctoMatch && selectedExtraOptions.includes('Hcto')) {
-            const hbHasAsterisk = hbMatch[1] === '*';
-            const hbValue = hbHasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
-            const hctoHasAsterisk = hctoMatch[1] === '*';
-            const hctoValue = hctoHasAsterisk ? `*${hctoMatch[2]}` : hctoMatch[2];
-            result += `Hb/Hcto: ${hbValue}/${hctoValue}, `;
+            const hbValue = hbMatch[1].replace(/\s+/g, '');
+            const hctoValue = hctoMatch[1].replace(/\s+/g, '');
+            const hbFormatted = this.formatValue(hbValue);
+            const hctoFormatted = this.formatValue(hctoValue);
+            result += `Hb/Hcto: ${hbFormatted}/${hctoFormatted}, `;
         } else if (hbMatch) {
-            const hasAsterisk = hbMatch[1] === '*';
-            const value = hasAsterisk ? `*${hbMatch[2]}` : hbMatch[2];
-            result += `Hb: ${value}, `;
+            const value = hbMatch[1].replace(/\s+/g, '');
+            const hbFormatted = this.formatValue(value);
+            result += `Hb: ${hbFormatted}, `;
         }
 
-        // Leucocitos - Buscar patrón: "Recuento de Leucocitos 5.67 10e3/uL"
-        let gbMatch = this.copyPasteText.match(/(?:Recuento de )?Leucocitos\s*\*?\s*(\d+\.?\d*)\s+10e3\/uL/i);
+        // Leucocitos - Buscar patrón: "Recuento de Leucocitos 5.67 10e3/uL" o "RECUENTO DE LEUCOCITOS 5.81 10^3/uL"
+        let gbMatch = this.copyPasteText.match(/RECUENTO DE LEUCOCITOS\s*(?:[hi]\s+)?(\d+\.?\d*)\s+(?:10\^3|10e3)\/uL/i);
         if (gbMatch) {
             // Formatear correctamente (ej: 5.67 → 5.670)
             const gbFormatted = parseFloat(gbMatch[1]).toFixed(3);
             result += `GB: ${gbFormatted} `;
         }
 
-        // % de Neutrófilos - Buscar patrón: "Neutrófilos % * 72.4 %"
-        let neutMatch = this.copyPasteText.match(/Neutrófilos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
-        // % de Linfocitos - Buscar patrón: "Linfocitos % * 16.2 %"
-        let linfMatch = this.copyPasteText.match(/Linfocitos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i);
+        // % de Neutrófilos - Buscar patrón: "Neutrófilos % * 72.4 %" o "NEUTROFILOS % 34.90 %"
+        let neutMatch = this.copyPasteText.match(/NEUTROFILOS\s*%\s*([hi]?\s*\d+\.?\d*)\s*%/i);
+        // % de Linfocitos - Buscar patrón: "Linfocitos % * 16.2 %" o "LINFOCITOS % 52.00 %"
+        let linfMatch = this.copyPasteText.match(/LINFOCITOS\s*%\s*([hi]?\s*\d+\.?\d*)\s*%/i);
         
         if (neutMatch && linfMatch && selectedExtraOptions.includes('Linfocitos')) {
-            const neutRounded = Math.round(parseFloat(neutMatch[1]));
-            const linfRounded = Math.round(parseFloat(linfMatch[1]));
+            const neutRounded = Math.round(parseFloat(neutMatch[1].replace(/\s+/g, '')));
+            const linfRounded = Math.round(parseFloat(linfMatch[1].replace(/\s+/g, '')));
             result += `(N: ${neutRounded}%, L: ${linfRounded}%), `;
         } else if (neutMatch) {
-            const neutRounded = Math.round(parseFloat(neutMatch[1]));
+            const neutRounded = Math.round(parseFloat(neutMatch[1].replace(/\s+/g, '')));
             result += `(N: ${neutRounded}%), `;
         }
 
-        // Plaquetas - Buscar patrón: "Recuento de Plaquetas 364 10e3/uL"
-        let plqMatch = this.copyPasteText.match(/(?:Recuento de )?Plaquetas\s*\*?\s*(\d+)\s+10e3\/uL/i);
+        // Plaquetas - Buscar patrón: "Recuento de Plaquetas 364 10e3/uL" o "RECUENTO DE PLAQUETAS 424 10^3/uL"
+        let plqMatch = this.copyPasteText.match(/RECUENTO DE PLAQUETAS\s*(?:[hi]\s+)?(\d+)\s+(?:10\^3|10e3)\/uL/i);
         if (plqMatch) {
             result += `Plq: ${plqMatch[1]}.000, `;
         }
@@ -462,7 +491,7 @@ class MedicalDataExtractor {
 
         let values = [];
 
-        // Creatinina
+        // Creatinina (sin redondear)
         const creaMatch = this.extractMatch(this.copyPasteText, /Creatinina[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (creaMatch) {
             const creaValue = this.extractMatch(creaMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
@@ -478,15 +507,16 @@ class MedicalDataExtractor {
             values.push(`BUN: ${bunNumber}`);
         }
 
-        // Urea
+        // Urea (redondear a entero)
         const ureaMatch = this.extractMatch(this.copyPasteText, /Urea[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (ureaMatch) {
             const ureaValue = this.extractMatch(ureaMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
             const ureaNumber = this.extractMatch(ureaValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            values.push(`Urea: ${ureaNumber}`);
+            const ureaRounded = Math.round(parseFloat(ureaNumber)).toString();
+            values.push(`Urea: ${ureaRounded}`);
         }
 
-        // ELP: Sodio/Potasio/Cloro
+        // ELP: Sodio/Potasio/Cloro (formateo específico para cada uno)
         const naMatch = this.extractMatch(this.copyPasteText, /Sodio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
         const kMatch = this.extractMatch(this.copyPasteText, /Potasio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
         const clMatch = this.extractMatch(this.copyPasteText, /Cloro[\s\S]*?(\*?\s*\d+\.?\d*)\s+mEq\/L/);
@@ -494,17 +524,20 @@ class MedicalDataExtractor {
         if (naMatch && kMatch && clMatch) {
             const naValue = this.extractMatch(naMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
             const naNumber = this.extractMatch(naValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            const naRounded = Math.round(parseFloat(naNumber)).toString(); // Sodio a entero
             
             const kValue = this.extractMatch(kMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
             const kNumber = this.extractMatch(kValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            const kRounded = parseFloat(kNumber).toFixed(1); // Potasio a 1 decimal
             
             const clValue = this.extractMatch(clMatch, /(\*?\s*\d+\.?\d*)\s+mEq\/L/);
             const clNumber = this.extractMatch(clValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+            const clRounded = Math.round(parseFloat(clNumber)).toString(); // Cloro a entero
             
-            values.push(`ELP: ${naNumber}/${kNumber}/${clNumber}`);
+            values.push(`ELP: ${naRounded}/${kRounded}/${clRounded}`);
         }
 
-        // Fósforo
+        // Fósforo (sin redondear)
         const pMatch = this.extractMatch(this.copyPasteText, /Fósforo[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (pMatch) {
             const pValue = this.extractMatch(pMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
@@ -512,15 +545,16 @@ class MedicalDataExtractor {
             values.push(`P: ${pNumber}`);
         }
 
-        // Calcio
+        // Calcio (redondear a 1 decimal)
         const caMatch = this.extractMatch(this.copyPasteText, /Calcio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (caMatch) {
             const caValue = this.extractMatch(caMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
             const caNumber = this.extractMatch(caValue, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            values.push(`Ca: ${caNumber}`);
+            const caRounded = parseFloat(caNumber).toFixed(1);
+            values.push(`Ca: ${caRounded}`);
         }
 
-        // Magnesio
+        // Magnesio (sin redondear)
         const mgMatch = this.extractMatch(this.copyPasteText, /Magnesio[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
         if (mgMatch) {
             const mgValue = this.extractMatch(mgMatch, /(\*?\s*\d+\.?\d*)\s+mg\/dL/);
@@ -538,46 +572,81 @@ class MedicalDataExtractor {
 
         let result = '';
 
-        // Bilirrubina Total/Directa
-        const biliTMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Total[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
-        const biliDMatch = this.extractMatch(this.copyPasteText, /Bilirrubina Directa[\s\S]*?(\*?\s*\d+\.?\d*)\s+mg\/dL/);
-        
-        if (biliTMatch && biliDMatch) {
-            const biliTValue = this.extractMatch(biliTMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            const biliDValue = this.extractMatch(biliDMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            result += `BiliT/D: ${biliTValue}/${biliDValue}, `;
-        } else if (biliTMatch) {
-            // Solo Bilirrubina Total
-            const biliTValue = this.extractMatch(biliTMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
+        // Bilirrubina Total - NUEVO FORMATO: "BILIRRUBINA TOTAL 0.16 mg/dL"
+        const biliTMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hepatico.bilirrubina_total);
+        if (biliTMatch) {
+            const biliTValue = biliTMatch[1].replace(/[hi\s]/g, '');
             result += `BiliT: ${biliTValue}, `;
-        } else if (biliDMatch) {
-            // Solo Bilirrubina Directa
-            const biliDValue = this.extractMatch(biliDMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            result += `BiliD: ${biliDValue}, `;
         }
 
-        // GOT/GPT (Transaminasas)
-        const gotMatch = this.extractMatch(this.copyPasteText, /Transaminasa GOT\/ASAT[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
-        const gptMatch = this.extractMatch(this.copyPasteText, /Transaminasa GPT\/\s?ALT[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        // GOT/GPT (Transaminasas) con múltiples patrones
+        let gotValue = null;
+        let gptValue = null;
         
-        if (gotMatch && gptMatch) {
-            const gotValue = this.extractMatch(gotMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            const gptValue = this.extractMatch(gptMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            result += `GOT/GPT: ${gotValue}/${gptValue}, `;
+        // Patrón 1: ASPARTATO AMINO TRANSFERASA (ASAT/GOT) 29.20 U/L
+        let gotMatch = this.copyPasteText.match(/ASPARTATO AMINO TRANSFERASA[\s\S]*?\(ASAT\/GOT\)[\s\S]*?([\d\.]+)\s*U\/L/i);
+        if (gotMatch) {
+            gotValue = gotMatch[1];
         }
+        
+        // Patrón 2: ALANINA AMINO TRANSFERASA (ALAT/GPT) h 50.10 U/L
+        let gptMatch = this.copyPasteText.match(/ALANINA AMINO TRANSFERASA[\s\S]*?\(ALAT\/GPT\)[\s\S]*?([\d\.]+)\s*U\/L/i);
+        if (gptMatch) {
+            gptValue = gptMatch[1];
+        }
+        
+        // Si no encuentra con los patrones anteriores, probar patrones alternativos
+        if (!gotValue) {
+            // Patrón alternativo: GOT/ASAT 29.20 U/L
+            gotMatch = this.copyPasteText.match(/(?:GOT|ASAT)[\s\S]*?([\d\.]+)\s*U\/L/i);
+            if (gotMatch) gotValue = gotMatch[1];
+        }
+        
+        if (!gptValue) {
+            // Patrón alternativo: GPT/ALT h 50.10 U/L
+            gptMatch = this.copyPasteText.match(/(?:GPT|ALT)[\s\S]*?[hi]?\s*([\d\.]+)\s*U\/L/i);
+            if (gptMatch) gptValue = gptMatch[1];
+        }
+        
+        // Combinar GOT/GPT si ambos valores se encontraron (aplicar formateo)
+        if (gotValue && gptValue) {
+            const gotFormatted = this.formatValue(gotValue);
+            const gptFormatted = this.formatValue(gptValue);
+            result += `GOT/GPT: ${gotFormatted}/${gptFormatted}, `;
+        } else if (gotValue) {
+            const gotFormatted = this.formatValue(gotValue);
+            result += `GOT: ${gotFormatted}, `;
+        } else if (gptValue) {
+            const gptFormatted = this.formatValue(gptValue);
+            result += `GPT: ${gptFormatted}, `;
+        }
+        
+        // Debug: imprimir valores encontrados
+        console.log('GOT encontrado:', gotValue);
+        console.log('GPT encontrado:', gptValue);
 
-        // Fosfatasa Alcalina
-        const faMatch = this.extractMatch(this.copyPasteText, /Fosfatasa Alcalina[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
+        // Fosfatasa Alcalina - NUEVO FORMATO: "FOSFATASAS ALCALINAS h 174.00 U/L"
+        const faMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hepatico.fosfatasa_alcalina);
         if (faMatch) {
-            const faValue = this.extractMatch(faMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            result += `FA: ${faValue}, `;
+            const faValue = faMatch[1].replace(/[hi\s]/g, '');
+            const faFormatted = this.formatValue(faValue);
+            result += `FA: ${faFormatted}, `;
         }
 
-        // GGT
-        const ggtMatch = this.extractMatch(this.copyPasteText, /Gamma Glutamiltranspeptidasa[\s\S]*?(\*?\s*\d+\.?\d*)\s+U\/L/);
-        if (ggtMatch) {
-            const ggtValue = this.extractMatch(ggtMatch, /\*?\s*\d+\.?\d*/).replace(/\s+/g, '');
-            result += `GGT: ${ggtValue}`;
+        // Albúmina - NUEVO FORMATO: "ALBUMINA 3.63 g/dL"
+        const albMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.nutricional.albumina);
+        if (albMatch) {
+            const albValue = albMatch[1].replace(/[hi\s]/g, '');
+            const albFormatted = this.formatValue(albValue);
+            result += `Alb: ${albFormatted}, `;
+        }
+
+        // Proteínas Totales - NUEVO FORMATO: "PROTEINAS TOTALES i 6.15 g/dL"
+        const protMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.nutricional.proteinas);
+        if (protMatch) {
+            const protValue = protMatch[1].replace(/[hi\s]/g, '');
+            const protFormatted = this.formatValue(protValue);
+            result += `Prot: ${protFormatted}`;
         }
 
         return this.cleanAsterisks(result);
@@ -649,10 +718,15 @@ class MedicalDataExtractor {
 
         let values = [];
 
-        // PCR - Buscar patrón: "Proteína C Reactiva * 156.0 mg/L"
-        let pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
+        // PCR - Buscar múltiples patrones: "PROTEINA C REACTIVA (CRP) h 23.30 mg/L" o "Proteína C Reactiva * 156.0 mg/L"
+        let pcrMatch = this.copyPasteText.match(/PROTEINA\s+C\s+REACTIVA\s*\(?CRP\)?\s*[hi*]*\s*(\d+\.?\d*)\s+mg\/L/i);
+        if (!pcrMatch) {
+            pcrMatch = this.copyPasteText.match(/Proteína\s+C\s+Reactiva\s*\*?\s*(\d+\.?\d*)\s+mg\/L/i);
+        }
         if (pcrMatch) {
-            values.push(`PCR: ${pcrMatch[1]}`);
+            // Redondear PCR a 1 decimal
+            const pcrValue = parseFloat(pcrMatch[1]).toFixed(1);
+            values.push(`PCR: ${pcrValue}`);
         }
 
         // Procalcitonina - Buscar patrón: "Procalcitonina * 0.25 ng/mL"
@@ -1007,12 +1081,17 @@ class MedicalDataExtractor {
             fechaMatch = this.extractMatch(this.copyPasteText, /Toma Muestra:\s*(\d{2}\/\d{2}\/\d{4})/);
         }
         
-        // Patrón 3: Fecha al inicio de línea "dd/mm/yyyy"
+        // Patrón 3: NUEVO - "Fecha/Hora de T. muestra : 29/07/2025 15:18:38"
+        if (!fechaMatch) {
+            fechaMatch = this.extractMatch(this.copyPasteText, /Fecha\/Hora de T\. muestra\s*:\s*(\d{2}\/\d{2}\/\d{4})/);
+        }
+        
+        // Patrón 4: Fecha al inicio de línea "dd/mm/yyyy"
         if (!fechaMatch) {
             fechaMatch = this.extractMatch(this.copyPasteText, /^(\d{2}\/\d{2}\/\d{4})/);
         }
         
-        // Patrón 4: Cualquier fecha en formato dd/mm/yyyy
+        // Patrón 5: Cualquier fecha en formato dd/mm/yyyy
         if (!fechaMatch) {
             fechaMatch = this.extractMatch(this.copyPasteText, /(\d{2}\/\d{2}\/\d{4})/);
         }
@@ -1145,6 +1224,11 @@ class MedicalDataExtractor {
             if (hemograma) results.push(hemograma);
         }
 
+        if (selectedOptions.includes('PCR')) {
+            const pcr = this.extractPCR();
+            if (pcr) results.push(pcr);
+        }
+
         if (selectedOptions.includes('Renal')) {
             const renal = this.extractRenal();
             if (renal) results.push(renal);
@@ -1163,11 +1247,6 @@ class MedicalDataExtractor {
         if (selectedOptions.includes('Nutricional')) {
             const nutricional = this.extractNutricional();
             if (nutricional) results.push(nutricional);
-        }
-
-        if (selectedOptions.includes('PCR')) {
-            const pcr = this.extractPCR();
-            if (pcr) results.push(pcr);
         }
 
         if (selectedOptions.includes('Gases')) {
