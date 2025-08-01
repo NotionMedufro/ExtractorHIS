@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
-    background: url('https://images.unsplash.com/photo-1606206873764-fd15e242df52?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat fixed;
+    background: url('https://images.unsplash.com/photo-1565210579809-6b057c557420?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') center/cover no-repeat fixed;
     line-height: 1.5;
     color: #1a1a1a;
     font-size: 16px;
@@ -68,14 +68,19 @@ body {
     backdrop-filter: blur(8px);
     border: 1px solid rgba(254, 202, 202, 0.6);
     border-radius: 8px;
-    padding: 16px;
-    margin-top: 16px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .warning-text {
     color: #991b1b;
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.4;
     margin: 0;
     font-weight: 500;
 }
@@ -133,14 +138,14 @@ body {
 .step-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 16px;
+    margin-bottom: 16px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     transition: transform 0.2s ease;
 }
 .step-card h2 {
     color: #1a1a1a;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     font-size: 1.25rem;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -151,8 +156,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    min-height: 40px;
+    margin-bottom: 10px;
+    min-height: 36px;
     width: 100%;
 }
 
@@ -269,6 +274,49 @@ body {
     margin-right: 8px;
 }
 
+/* Header controls layout */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Utility buttons inline */
+.utility-buttons-inline {
+    display: flex;
+    gap: 4px;
+}
+
+.utility-button-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border: 1px solid rgba(229, 231, 235, 0.6);
+    border-radius: 5px;
+    background: rgba(249, 250, 251, 0.8);
+    backdrop-filter: blur(8px);
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.utility-button-inline:hover {
+    background: rgba(243, 244, 246, 0.9);
+    border-color: rgba(209, 213, 219, 0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.utility-button-inline:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 /* Selection Grid */
 .selection-grid {
     display: grid;
@@ -343,9 +391,9 @@ body {
 /* Compact Selection Grid */
 .selection-grid-compact {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
     overflow: visible;
     position: relative;
 }
@@ -353,14 +401,15 @@ body {
 .selection-item-compact {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid rgba(229, 231, 235, 0.6);
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: pointer;
     transition: all 0.2s ease;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(8px);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    min-height: 32px;
 }
 
 .selection-item-compact:hover {
@@ -402,9 +451,12 @@ body {
 }
 
 .selection-label-compact {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: #374151;
     transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Utility Buttons */
@@ -453,8 +505,8 @@ body {
 
 /* Results Status */
 .results-status {
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
     background: rgba(249, 250, 251, 0.8);
     backdrop-filter: blur(8px);
     border-radius: 8px;
@@ -476,11 +528,11 @@ body {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
     font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
     font-size: 0.875rem;
-    line-height: 1.6;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-wrap: break-word;
     border: 1px solid rgba(229, 231, 235, 0.6);
@@ -496,7 +548,7 @@ body {
 
 /* Copy Area */
 .copy-area {
-    margin-top: 16px;
+    margin-top: 12px;
     display: flex;
     justify-content: center;
 }
@@ -534,7 +586,7 @@ body {
 
 /* Input Group */
 .input-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -726,9 +778,8 @@ body {
         font-size: 1.5rem;
     }
     
-    .two-column-layout {
-        flex-direction: column;
-        gap: 20px;
+    .parametros {
+        padding: 15px;
     }
     
     .right-column, .left-column {
@@ -784,6 +835,17 @@ body {
     }
 }
 
+@media (min-width: 769px) {
+    .parametros {
+        display: block;
+    }
+
+    .two-column-layout {
+        display: flex;
+        gap: 15px;
+    }
+}
+
 @media (max-width: 480px) {
     .step-card {
         padding: 20px;
@@ -814,7 +876,7 @@ body {
 .tabs-header {
     display: flex;
     border-bottom: 1px solid #e5e7eb;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     gap: 0;
 }
 
@@ -1032,9 +1094,9 @@ body {
 
 /* Estilos para botones de acción de la tabla */
 .table-actions {
-    margin-top: 16px;
+    margin-top: 12px;
     display: flex;
-    gap: 15px;
+    gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
 }
