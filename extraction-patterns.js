@@ -10,10 +10,10 @@ const EXTRACTION_PATTERNS = {
     // ====== HEMOGRAMA ======
     hemograma: {
         // Hemoglobina - NUEVO FORMATO: "HEMOGLOBINA 10.00 g/dL"
-        hemoglobina: /HEMOGLOBINA\s+([hi]?\s*\d+\.?\d*)\s+g\/dL/i,
+        hemoglobina: /HEMOGLOBINA\s+[hi]?\s*(\d+\.?\d*)\s+g\/dL/i,
         
         // Hematocrito - NUEVO FORMATO: "HEMATOCRITO 30.00 %"
-        hematocrito: /HEMATOCRITO\s+([hi]?\s*\d+\.?\d*)\s*%/i,
+        hematocrito: /HEMATOCRITO\s+[hi]?\s*(\d+\.?\d*)\s*%/i,
         
         // Leucocitos - NUEVO FORMATO: "RECUENTO DE LEUCOCITOS 5.81 10^3/uL" o "RECUENTO DE LEUCOCITOS i 5.81 10^3/uL"
        leucocitos: /RECUENTO DE LEUCOCITOS\s+(?:[hi]\s+)?(\d+\.?\d*)\s+(?:10\^3|10e3)\/uL/i,

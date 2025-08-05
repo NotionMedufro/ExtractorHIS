@@ -434,47 +434,50 @@ class MedicalDataExtractor {
         let result = '';
         const selectedExtraOptions = this.getSelectedHemogramaExtraOptions();
 
-        // Hemoglobina - Buscar patrón específico: "Hemoglobina * 9.7 g/dL" o "HEMOGLOBINA 10.00 g/dL"
-        let hbMatch = this.copyPasteText.match(/HEMOGLOBINA\s*([hi]?\s*\d+\.?\d*)\s+g\/dL/i);
-        // Hematocrito - Buscar patrón: "Hematocrito * 34.1 %" o "HEMATOCRITO 30.00 %"
-        let hctoMatch = this.copyPasteText.match(/HEMATOCRITO\s*([hi]?\s*\d+\.?\d*)\s*%/i);
+        // Hemoglobina
+        let hbMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hemograma.hemoglobina);
+        // Hematocrito
+        let hctoMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hemograma.hematocrito);
         
         if (hbMatch && hctoMatch && selectedExtraOptions.includes('Hcto')) {
-            const hbValue = hbMatch[1].replace(/\s+/g, '');
-            const hctoValue = hctoMatch[1].replace(/\s+/g, '');
-            const hbFormatted = this.formatValue(hbValue);
-            const hctoFormatted = this.formatValue(hctoValue);
-            result += `Hb/Hcto: ${hbFormatted}/${hctoFormatted}, `;
+            const hbValue = parseFloat(hbMatch[1]);
+            const hctoValue = parseFloat(hctoMatch[1]);
+            if (!isNaN(hbValue) && !isNaN(hctoValue)) {
+                result += `Hb/Hcto: ${hbValue.toFixed(1)}/${hctoValue.toFixed(1)}, `;
+            }
         } else if (hbMatch) {
-            const value = hbMatch[1].replace(/\s+/g, '');
-            const hbFormatted = this.formatValue(value);
-            result += `Hb: ${hbFormatted}, `;
+            const hbValue = parseFloat(hbMatch[1]);
+            if (!isNaN(hbValue)) {
+                result += `Hb: ${hbValue.toFixed(1)}, `;
+            }
         }
 
-        // Leucocitos - Buscar patrón: "Recuento de Leucocitos 5.67 10e3/uL" o "RECUENTO DE LEUCOCITOS 5.81 10^3/uL"
-        let gbMatch = this.copyPasteText.match(/RECUENTO DE LEUCOCITOS\s*(?:[hi]\s+)?(\d+\.?\d*)\s+(?:10\^3|10e3)\/uL/i);
+        // Leucocitos
+        let gbMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hemograma.leucocitos);
         if (gbMatch) {
-            // Formatear correctamente (ej: 5.67 → 5.670)
             const gbFormatted = parseFloat(gbMatch[1]).toFixed(3);
             result += `GB: ${gbFormatted} `;
         }
 
-        // % de Neutrófilos - Buscar patrón: "Neutrófilos % * 72.4 %" o "NEUTROFILOS % 34.90 %"
-        let neutMatch = this.copyPasteText.match(/NEUTROFILOS\s*%\s*([hi]?\s*\d+\.?\d*)\s*%/i);
-        // % de Linfocitos - Buscar patrón: "Linfocitos % * 16.2 %" o "LINFOCITOS % 52.00 %"
-        let linfMatch = this.copyPasteText.match(/LINFOCITOS\s*%\s*([hi]?\s*\d+\.?\d*)\s*%/i);
+        // % de Neutrófilos
+        let neutMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hemograma.neutrofilos_porcentaje);
+        // % de Linfocitos
+        let linfMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hemograma.linfocitos_porcentaje);
         
         if (neutMatch && linfMatch && selectedExtraOptions.includes('Linfocitos')) {
-            const neutRounded = Math.round(parseFloat(neutMatch[1].replace(/\s+/g, '')));
-            const linfRounded = Math.round(parseFloat(linfMatch[1].replace(/\s+/g, '')));
+            const neutValue = parseFloat(neutMatch[1]);
+            const linfValue = parseFloat(linfMatch[1]);
+            const neutRounded = isNaN(neutValue) ? 'Error' : Math.round(neutValue);
+            const linfRounded = isNaN(linfValue) ? 'Error' : Math.round(linfValue);
             result += `(N: ${neutRounded}%, L: ${linfRounded}%), `;
         } else if (neutMatch) {
-            const neutRounded = Math.round(parseFloat(neutMatch[1].replace(/\s+/g, '')));
+            const neutValue = parseFloat(neutMatch[1]);
+            const neutRounded = isNaN(neutValue) ? 'Error' : Math.round(neutValue);
             result += `(N: ${neutRounded}%), `;
         }
 
-        // Plaquetas - Buscar patrón: "Recuento de Plaquetas 364 10e3/uL" o "RECUENTO DE PLAQUETAS 424 10^3/uL"
-        let plqMatch = this.copyPasteText.match(/RECUENTO DE PLAQUETAS\s*(?:[hi]\s+)?(\d+)\s+(?:10\^3|10e3)\/uL/i);
+        // Plaquetas
+        let plqMatch = this.copyPasteText.match(EXTRACTION_PATTERNS.hemograma.plaquetas);
         if (plqMatch) {
             result += `Plq: ${plqMatch[1]}.000, `;
         }
