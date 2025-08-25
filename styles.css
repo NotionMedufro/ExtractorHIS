@@ -1527,6 +1527,11 @@ footer {
     overflow: visible;
 }
 
+/* Aumentar z-index del step-card que contiene dropdowns abiertos */
+.step-card.dropdown-parent-active {
+    z-index: 1000;
+}
+
 /* Estilos específicos para el dropdown de hemograma */
 #hemograma-dropdown {
     top: 100%;

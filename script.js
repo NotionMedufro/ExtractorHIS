@@ -1235,11 +1235,22 @@ function initializeHemogramaDropdown() {
         document.querySelectorAll('.dropdown-content').forEach(dropdown => {
             if (dropdown !== dropdownContent) {
                 dropdown.classList.remove('show');
+                // Remover clase del step-card que contenía el dropdown cerrado
+                const otherParentStepCard = dropdown.closest('.step-card');
+                if (otherParentStepCard) {
+                    otherParentStepCard.classList.remove('dropdown-parent-active');
+                }
             }
         });
         
         dropdownContent.classList.add('show');
         document.body.classList.add('dropdown-open');
+        
+        // Agregar clase al step-card padre para aumentar z-index
+        const parentStepCard = dropdownContent.closest('.step-card');
+        if (parentStepCard) {
+            parentStepCard.classList.add('dropdown-parent-active');
+        }
         
         // Rotar el chevron
         const chevron = dropdownToggle.querySelector('svg');
@@ -1253,6 +1264,12 @@ function initializeHemogramaDropdown() {
         if (!isClickOpen) {
             dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
+            
+            // Remover clase del step-card padre para reducir z-index
+            const parentStepCard = dropdownContent.closest('.step-card');
+            if (parentStepCard) {
+                parentStepCard.classList.remove('dropdown-parent-active');
+            }
             
             // Resetear chevron
             const chevron = dropdownToggle.querySelector('svg');
@@ -1354,6 +1371,11 @@ function initializeHemogramaDropdown() {
         if (!e.target.closest('.selection-item-with-dropdown')) {
             document.querySelectorAll('.dropdown-content').forEach(dropdown => {
                 dropdown.classList.remove('show');
+                // Remover clase del step-card que contenía el dropdown cerrado
+                const parentStepCard = dropdown.closest('.step-card');
+                if (parentStepCard) {
+                    parentStepCard.classList.remove('dropdown-parent-active');
+                }
             });
             document.body.classList.remove('dropdown-open');
             
@@ -1389,11 +1411,22 @@ function initializeRenalDropdown() {
         document.querySelectorAll('.dropdown-content').forEach(dropdown => {
             if (dropdown !== dropdownContent) {
                 dropdown.classList.remove('show');
+                // Remover clase del step-card que contenía el dropdown cerrado
+                const otherParentStepCard = dropdown.closest('.step-card');
+                if (otherParentStepCard) {
+                    otherParentStepCard.classList.remove('dropdown-parent-active');
+                }
             }
         });
         
         dropdownContent.classList.add('show');
         document.body.classList.add('dropdown-open');
+        
+        // Agregar clase al step-card padre para aumentar z-index
+        const parentStepCard = dropdownContent.closest('.step-card');
+        if (parentStepCard) {
+            parentStepCard.classList.add('dropdown-parent-active');
+        }
         
         // Rotar el chevron
         const chevron = dropdownToggle.querySelector('svg');
@@ -1407,6 +1440,12 @@ function initializeRenalDropdown() {
         if (!isClickOpen) {
             dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
+            
+            // Remover clase del step-card padre para reducir z-index
+            const parentStepCard = dropdownContent.closest('.step-card');
+            if (parentStepCard) {
+                parentStepCard.classList.remove('dropdown-parent-active');
+            }
             
             // Resetear chevron
             const chevron = dropdownToggle.querySelector('svg');
