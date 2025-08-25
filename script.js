@@ -444,40 +444,259 @@ class ExtractorMedico {
 // INSTANCIA GLOBAL
 const extractor = new ExtractorMedico();
 
+// ===== SISTEMA DE MÚLTIPLES EXÁMENES =====
+let examCounter = 1;
+let currentExams = new Map(); // ID del examen -> texto del examen
+
+// Función para agregar un nuevo examen
+function agregarNuevoExamen() {
+    examCounter++;
+    const examId = examCounter;
+    
+    const examItem = document.createElement('div');
+    examItem.className = 'exam-item';
+    examItem.setAttribute('data-exam-id', examId);
+    
+    examItem.innerHTML = `
+        <div class="exam-header">
+            <span class="exam-title">Examen #${examId}</span>
+            <div class="exam-controls">
+                <button class="exam-paste-btn" title="Pegar texto">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    </svg>
+                </button>
+                <button class="exam-clear-btn" title="Limpiar texto">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                </button>
+                <button class="exam-remove-btn" title="Eliminar examen">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="exam-input">
+            <textarea class="exam-textarea" 
+                    placeholder="1. En la página pdf del examen presiona: Ctrl + A para seleccionar todo el texto&#10;2. Copia el texto mediante: Ctrl + C&#10;3. Pega el texto aquí mediante: Ctrl + V"></textarea>
+        </div>
+    `;
+    
+    const examsContainer = document.getElementById('examsContainer');
+    examsContainer.appendChild(examItem);
+    
+    // Agregar event listeners para los botones del nuevo examen
+    setupExamEventListeners(examItem, examId);
+    
+    // Mostrar el botón de eliminar en todos los exámenes si hay más de uno
+    updateRemoveButtons();
+    
+    // Enfocar el nuevo textarea
+    const textarea = examItem.querySelector('.exam-textarea');
+    textarea.focus();
+    
+    // Registrar el nuevo examen
+    currentExams.set(examId, '');
+    
+    mostrarNotificacion(`Examen #${examId} agregado`, 'success');
+}
+
+// Función para configurar event listeners de un examen
+function setupExamEventListeners(examItem, examId) {
+    const textarea = examItem.querySelector('.exam-textarea');
+    const pasteBtn = examItem.querySelector('.exam-paste-btn');
+    const clearBtn = examItem.querySelector('.exam-clear-btn');
+    const removeBtn = examItem.querySelector('.exam-remove-btn');
+    
+    // Event listener para cambios en el textarea
+    let extractTimeout;
+    textarea.addEventListener('input', function() {
+        const texto = this.value.trim();
+        currentExams.set(examId, texto);
+        
+        clearTimeout(extractTimeout);
+        extractTimeout = setTimeout(extraerAutomaticamente, 300);
+    });
+    
+    // Extraer inmediatamente cuando se pega contenido
+    textarea.addEventListener('paste', function() {
+        setTimeout(() => {
+            currentExams.set(examId, this.value.trim());
+            extraerAutomaticamente();
+        }, 100);
+    });
+    
+    // Botón pegar
+    pasteBtn.addEventListener('click', function() {
+        pegarTextoEnExamen(examId, textarea);
+    });
+    
+    // Botón limpiar
+    clearBtn.addEventListener('click', function() {
+        limpiarTextoExamen(examId, textarea);
+    });
+    
+    // Botón eliminar
+    removeBtn.addEventListener('click', function() {
+        eliminarExamen(examId, examItem);
+    });
+}
+
+// Función para pegar texto en un examen específico
+function pegarTextoEnExamen(examId, textarea) {
+    if (!navigator.clipboard) {
+        mostrarNotificacion('Tu navegador no soporta la funcionalidad de portapapeles', 'error');
+        return;
+    }
+    
+    navigator.clipboard.readText()
+        .then(text => {
+            if (text.trim()) {
+                textarea.value = text;
+                currentExams.set(examId, text.trim());
+                extraerAutomaticamente();
+                mostrarNotificacion(`Texto pegado en Examen #${examId}`, 'success');
+            } else {
+                mostrarNotificacion('El portapapeles está vacío', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error al leer del portapapeles:', err);
+            mostrarNotificacion('No se pudo acceder al portapapeles', 'error');
+        });
+}
+
+// Función para limpiar texto de un examen específico
+function limpiarTextoExamen(examId, textarea) {
+    textarea.value = '';
+    currentExams.set(examId, '');
+    extraerAutomaticamente();
+    mostrarNotificacion(`Examen #${examId} limpiado`, 'info');
+}
+
+// Función para eliminar un examen
+function eliminarExamen(examId, examItem) {
+    examItem.remove();
+    currentExams.delete(examId);
+    updateRemoveButtons();
+    extraerAutomaticamente();
+    mostrarNotificacion(`Examen #${examId} eliminado`, 'info');
+}
+
+// Función para actualizar la visibilidad de los botones de eliminar
+function updateRemoveButtons() {
+    const examItems = document.querySelectorAll('.exam-item');
+    const showRemoveButtons = examItems.length > 1;
+    
+    examItems.forEach(item => {
+        const removeBtn = item.querySelector('.exam-remove-btn');
+        removeBtn.style.display = showRemoveButtons ? 'flex' : 'none';
+    });
+}
+
+// Función para limpiar todos los exámenes
+function limpiarTodosLosExamenes() {
+    const examItems = document.querySelectorAll('.exam-item');
+    
+    if (examItems.length === 0) {
+        mostrarNotificacion('No hay exámenes para limpiar', 'error');
+        return;
+    }
+    
+    // Mantener solo el primer examen y limpiarlo
+    examItems.forEach((item, index) => {
+        if (index === 0) {
+            const textarea = item.querySelector('.exam-textarea');
+            textarea.value = '';
+            const examId = parseInt(item.getAttribute('data-exam-id'));
+            currentExams.set(examId, '');
+        } else {
+            const examId = parseInt(item.getAttribute('data-exam-id'));
+            currentExams.delete(examId);
+            item.remove();
+        }
+    });
+    
+    updateRemoveButtons();
+    extraerAutomaticamente();
+    mostrarNotificacion('Todos los exámenes limpiados', 'info');
+}
+
+// Función para obtener todos los textos de exámenes activos
+function obtenerTextosExamenes() {
+    const textosExamenes = [];
+    currentExams.forEach((texto, examId) => {
+        if (texto.trim()) {
+            textosExamenes.push({ id: examId, texto });
+        }
+    });
+    return textosExamenes;
+}
+
 // ===== FUNCIONES DE INTERFAZ =====
 
-// Función principal de extracción automática
+// Función principal de extracción automática para múltiples exámenes
 function extraerAutomaticamente() {
-    const textoExamen = document.getElementById('copyPasteText').value.trim();
+    const textosExamenes = obtenerTextosExamenes();
     const opcionesSeleccionadas = obtenerOpcionesSeleccionadas();
     const resultsDiv = document.getElementById('results');
     const resultsStatus = document.getElementById('resultsStatus');
     const copyArea = document.getElementById('copyArea');
 
     // Validaciones
-    if (!textoExamen) {
-        mostrarEstado('Pega el texto del reporte médico para continuar');
+    if (textosExamenes.length === 0) {
+        mostrarEstado('Pega el texto de al menos un examen para continuar');
         return;
     }
 
-    // Caso especial: "Tal cual"
-    if (opcionesSeleccionadas.includes('Talcual')) {
-        mostrarResultados(textoExamen);
+    if (opcionesSeleccionadas.length === 0) {
+        mostrarEstado('Selecciona al menos un parámetro para extraer');
         return;
     }
 
     try {
-        // Solo extraer hematocrito
-        const resultado = extractor.extraer(textoExamen, opcionesSeleccionadas);
+        let resultadosFinales = [];
         
-        if (resultado && resultado !== 'Esta versión solo extrae hematocrito. Selecciona "Hemograma" para extraer Hcto.') {
-            mostrarResultados(resultado);
+        // Procesar cada examen
+        textosExamenes.forEach(examen => {
+            // Caso especial: "Tal cual"
+            if (opcionesSeleccionadas.includes('Talcual')) {
+                resultadosFinales.push(`=== EXAMEN #${examen.id} ===\n${examen.texto}`);
+                return;
+            }
+
+            // Extraer datos del examen
+            const resultado = extractor.extraer(examen.texto, opcionesSeleccionadas);
+            
+            if (resultado && resultado.trim()) {
+                // Agregar encabezado del examen si hay múltiples exámenes
+                if (textosExamenes.length > 1) {
+                    resultadosFinales.push(`=== EXAMEN #${examen.id} ===\n${resultado}`);
+                } else {
+                    resultadosFinales.push(resultado);
+                }
+            } else {
+                if (textosExamenes.length > 1) {
+                    resultadosFinales.push(`=== EXAMEN #${examen.id} ===\nNo se encontraron datos`);
+                }
+            }
+        });
+        
+        if (resultadosFinales.length > 0) {
+            const resultadoFinal = resultadosFinales.join('\n\n');
+            mostrarResultados(resultadoFinal);
         } else {
-            mostrarEstado('No se encontró hematocrito en el texto');
+            mostrarEstado('No se encontraron datos en ningún examen');
         }
     } catch (error) {
         console.error('Error en la extracción:', error);
-        mostrarEstado('Error al procesar el texto');
+        mostrarEstado('Error al procesar los exámenes');
     }
 }
 
@@ -570,6 +789,102 @@ function limpiarSeleccion() {
     mostrarNotificacion('Selección borrada', 'info');
 }
 
+// Función para pegar texto del portapapeles
+function pegarTextoDelPortapapeles() {
+    const textarea = document.getElementById('copyPasteText');
+    
+    if (!navigator.clipboard) {
+        mostrarNotificacion('Tu navegador no soporta la funcionalidad de portapapeles', 'error');
+        return;
+    }
+    
+    navigator.clipboard.readText()
+        .then(text => {
+            if (text.trim()) {
+                textarea.value = text;
+                extraerAutomaticamente();
+                mostrarNotificacion('Texto pegado desde el portapapeles', 'success');
+            } else {
+                mostrarNotificacion('El portapapeles está vacío', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error al leer del portapapeles:', err);
+            mostrarNotificacion('No se pudo acceder al portapapeles', 'error');
+        });
+}
+
+// Función para limpiar el texto del examen
+function limpiarTexto() {
+    const textarea = document.getElementById('copyPasteText');
+    textarea.value = '';
+    extraerAutomaticamente();
+    mostrarNotificacion('Texto del examen borrado', 'info');
+}
+
+// ===== TEMA OSCURO =====
+function initializeThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    
+    // Detectar preferencia del sistema
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Obtener tema guardado o usar preferencia del sistema
+    const savedTheme = localStorage.getItem('theme');
+    const initialTheme = savedTheme || (prefersDarkScheme.matches ? 'dark' : 'light');
+    
+    // Aplicar tema inicial
+    applyTheme(initialTheme);
+    
+    // Event listener para el botón
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = html.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Mostrar notificación - DESHABILITADO
+            // const mensaje = newTheme === 'dark' ? 'Modo oscuro activado' : 'Modo claro activado';
+            // mostrarNotificacion(mensaje, 'info');
+        });
+    }
+    
+    // Escuchar cambios en la preferencia del sistema
+    prefersDarkScheme.addEventListener('change', function() {
+        if (!localStorage.getItem('theme')) {
+            applyTheme(prefersDarkScheme.matches ? 'dark' : 'light');
+        }
+    });
+}
+
+function applyTheme(theme) {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', theme);
+    
+    // Actualizar meta theme-color para navegadores móviles
+    updateThemeColor(theme);
+}
+
+function updateThemeColor(theme) {
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    
+    if (!themeColorMeta) {
+        themeColorMeta = document.createElement('meta');
+        themeColorMeta.name = 'theme-color';
+        document.head.appendChild(themeColorMeta);
+    }
+    
+    // Colores para la barra de estado del navegador móvil
+    const themeColors = {
+        light: '#ffffff',
+        dark: '#1f2937'
+    };
+    
+    themeColorMeta.content = themeColors[theme] || themeColors.light;
+}
+
 // ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', function() {
     const copyPasteTextarea = document.getElementById('copyPasteText');
@@ -594,10 +909,34 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(extraerAutomaticamente, 100);
     });
 
-    // Botones
+    // Botones principales
     selectAllBtn.addEventListener('click', seleccionarTodo);
     clearAllBtn.addEventListener('click', limpiarSeleccion);
     copyBtn.addEventListener('click', copiarResultado);
+    
+    // Botones del texto
+    const pasteTextBtn = document.getElementById('pasteTextBtn');
+    const clearTextBtn = document.getElementById('clearTextBtn');
+    
+    if (pasteTextBtn) {
+        pasteTextBtn.addEventListener('click', pegarTextoDelPortapapeles);
+    }
+    
+    if (clearTextBtn) {
+        clearTextBtn.addEventListener('click', limpiarTexto);
+    }
+    
+    // Botones de descarga de tabla
+    const downloadImageBtn = document.getElementById('downloadImageBtn');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    
+    if (downloadImageBtn) {
+        downloadImageBtn.addEventListener('click', descargarTablaComoImagen);
+    }
+    
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', descargarTablaComoPDF);
+    }
 
     // Atajos de teclado
     document.addEventListener('keydown', function(e) {
@@ -622,6 +961,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             this.classList.add('active');
             document.getElementById(`tab-${targetTab}`).classList.add('active');
+            
+            // Si se selecciona la pestaña tabla, generar tabla comparativa
+            if (targetTab === 'tabla') {
+                generarTablaComparativa();
+            }
         });
     });
     
@@ -674,6 +1018,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar funcionalidad del desplegable de renal
     initializeRenalDropdown();
+    
+    // ===== INICIALIZACIÓN DE MÚLTIPLES EXÁMENES =====
+    // Botones de gestión de exámenes
+    const addNewExamBtn = document.getElementById('addNewExamBtn');
+    const clearAllExamsBtn = document.getElementById('clearAllExamsBtn');
+    
+    if (addNewExamBtn) {
+        addNewExamBtn.addEventListener('click', agregarNuevoExamen);
+    }
+    
+    if (clearAllExamsBtn) {
+        clearAllExamsBtn.addEventListener('click', limpiarTodosLosExamenes);
+    }
+    
+    // Configurar event listeners del primer examen existente
+    const firstExamItem = document.querySelector('.exam-item[data-exam-id="1"]');
+    if (firstExamItem) {
+        setupExamEventListeners(firstExamItem, 1);
+        currentExams.set(1, ''); // Registrar el primer examen
+    }
+    
+    // Inicializar tema
+    initializeThemeToggle();
 });
 
 // ===== FUNCIONES DE DESCARGA =====
@@ -689,6 +1056,121 @@ function descargarComoTexto(contenido, nombreArchivo = 'extraccion-medica.txt') 
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+}
+
+// Lista de parámetros para tabla comparativa en orden específico
+const PARAMETROS_TABLA = [
+    { nombre: 'Leucocitos (10³/uL)', patron: PATRONES_EXTRACCION.leucocitos, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: '% Neutrófilos', patron: PATRONES_EXTRACCION.neutrofilos, formato: (v) => Math.round(parseFloat(v)).toString() },
+    { nombre: 'RAN', patron: PATRONES_EXTRACCION.neutrofilos_abs, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'RAL', patron: PATRONES_EXTRACCION.linfocitos_abs, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Hematocrito (%)', patron: PATRONES_EXTRACCION.hematocrito_pct, formato: (v) => Math.round(parseFloat(v)).toString() },
+    { nombre: 'Hemoglobina (g/dL)', patron: PATRONES_EXTRACCION.hemoglobina, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Plaquetas (10³/uL)', patron: PATRONES_EXTRACCION.plaquetas, formato: (v) => parseInt(v).toString() },
+    { nombre: 'VHS', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'PCR', patron: PATRONES_EXTRACCION.pcr, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'PT (%)', patron: PATRONES_EXTRACCION.tp_pct, formato: (v) => Math.round(parseFloat(v)).toString() },
+    { nombre: 'INR', patron: PATRONES_EXTRACCION.inr_val, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'TTPA', patron: PATRONES_EXTRACCION.ttpa_seg, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Glicemia', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'Uremia (mg/dL)', patron: PATRONES_EXTRACCION.urea, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'BUN (mg%)', patron: PATRONES_EXTRACCION.bun, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Creatinina (mg/dL)', patron: PATRONES_EXTRACCION.creatinina, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'VFG (mL/min)', patron: PATRONES_EXTRACCION.vfg, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Sodio (mEq/L)', patron: PATRONES_EXTRACCION.sodio, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Potasio (mEq/L)', patron: PATRONES_EXTRACCION.potasio, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Cloro (mEq/L)', patron: PATRONES_EXTRACCION.cloro, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Calcio (mg/dL)', patron: PATRONES_EXTRACCION.calcio, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Fósforo (mg/dL)', patron: PATRONES_EXTRACCION.fosforo, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Magnesio (mg/dL)', patron: PATRONES_EXTRACCION.magnesio, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Albúmina (g/dL)', patron: /ALBUMINA\s\D*(\d+\.?\d*)\s*g\/dL/i, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Prealbúmina', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'Proteínas', patron: /PROTEINAS\s+TOTALES\s\D*(\d+\.?\d*)\s*g\/dL/i, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Bilirrubina Total', patron: PATRONES_EXTRACCION.bilirrubina_total, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Bilirrubina Directa', patron: PATRONES_EXTRACCION.bilirrubina_directa, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'Fosfatasa Alcalina', patron: PATRONES_EXTRACCION.fosfatasa_alcalina, formato: (v) => Math.round(parseFloat(v)).toString() },
+    { nombre: 'GGT', patron: PATRONES_EXTRACCION.ggt, formato: (v) => parseFloat(v.replace(',', '.')).toFixed(1) },
+    { nombre: 'GOT', patron: PATRONES_EXTRACCION.got, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'GPT', patron: PATRONES_EXTRACCION.gpt, formato: (v) => parseFloat(v).toFixed(1) },
+    { nombre: 'Amilasa', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'Lipasa', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'Ácido Úrico (mg/dL)', patron: PATRONES_EXTRACCION.acido_urico, formato: (v) => parseFloat(v).toFixed(2) },
+    { nombre: 'LDH', patron: PATRONES_EXTRACCION.ldh, formato: (v) => Math.round(parseFloat(v)).toString() },
+    { nombre: 'CK Total', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'CK MB', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'Troponina', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'PO2 (mmHg)', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'PCO2 (mmHg)', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'HCO3 (mmol/L)', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'pH', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'BE (mmol/L)', patron: null, formato: (v) => v }, // No hay patrón definido
+    { nombre: 'SatO2 (%)', patron: null, formato: (v) => v } // No hay patrón definido
+];
+
+// Función para generar tabla comparativa
+function generarTablaComparativa() {
+    const textoExamen = document.getElementById('copyPasteText').value.trim();
+    const tableContainer = document.querySelector('.comparative-table-container');
+    const tableActions = document.getElementById('tableActions');
+    
+    if (!textoExamen) {
+        tableContainer.innerHTML = '<p class="status-text">Pega el texto del reporte médico para generar la tabla comparativa</p>';
+        tableActions.style.display = 'none';
+        return;
+    }
+    
+    // Crear tabla HTML
+    let tableHTML = `
+        <table class="comparative-table">
+            <thead>
+                <tr>
+                    <th>Parámetro</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    let valoresEncontrados = 0;
+    
+    // Procesar cada parámetro en orden
+    PARAMETROS_TABLA.forEach(parametro => {
+        let valor = '-';
+        
+        if (parametro.patron) {
+            const match = textoExamen.match(parametro.patron);
+            if (match && match[1]) {
+                try {
+                    valor = parametro.formato(match[1]);
+                    valoresEncontrados++;
+                } catch (e) {
+                    console.warn(`Error formateando ${parametro.nombre}:`, e);
+                    valor = match[1]; // Usar valor sin formatear si hay error
+                }
+            }
+        }
+        
+        tableHTML += `
+            <tr>
+                <td>${parametro.nombre}</td>
+                <td>${valor}</td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Mostrar tabla o mensaje de estado
+    if (valoresEncontrados > 0) {
+        tableContainer.innerHTML = tableHTML;
+        tableActions.style.display = 'flex';
+    } else {
+        tableContainer.innerHTML = '<p class="status-text">No se encontraron valores para mostrar en la tabla</p>';
+        tableActions.style.display = 'none';
+    }
 }
 
 // Función para descargar tabla como imagen (requiere html2canvas)
@@ -734,16 +1216,93 @@ function initializeHemogramaDropdown() {
     
     const dropdownToggle = document.querySelector('.hemograma-with-dropdown .dropdown-toggle-inline');
     const dropdownContent = document.getElementById('hemograma-dropdown');
+    const hemogramaContainer = document.querySelector('.hemograma-with-dropdown');
     
     console.log('Dropdown toggle encontrado:', dropdownToggle);
     console.log('Dropdown content encontrado:', dropdownContent);
     
-    if (!dropdownToggle || !dropdownContent) {
+    if (!dropdownToggle || !dropdownContent || !hemogramaContainer) {
         console.warn('Elementos del desplegable de hemograma no encontrados');
         return;
     }
     
-    // Toggle del desplegable
+    let hoverTimeout = null;
+    let isClickOpen = false;
+    
+    // Función para abrir dropdown
+    function openDropdown() {
+        // Cerrar todos los otros desplegables
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+            if (dropdown !== dropdownContent) {
+                dropdown.classList.remove('show');
+            }
+        });
+        
+        dropdownContent.classList.add('show');
+        document.body.classList.add('dropdown-open');
+        
+        // Rotar el chevron
+        const chevron = dropdownToggle.querySelector('svg');
+        if (chevron) {
+            chevron.style.transform = 'rotate(180deg)';
+        }
+    }
+    
+    // Función para cerrar dropdown
+    function closeDropdown() {
+        if (!isClickOpen) {
+            dropdownContent.classList.remove('show');
+            document.body.classList.remove('dropdown-open');
+            
+            // Resetear chevron
+            const chevron = dropdownToggle.querySelector('svg');
+            if (chevron) {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+    }
+    
+    // Hover events para el contenedor completo
+    hemogramaContainer.addEventListener('mouseenter', function() {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+            if (!dropdownContent.classList.contains('show')) {
+                openDropdown();
+            }
+        }, 1000); // 1 segundo de delay
+    });
+    
+    hemogramaContainer.addEventListener('mouseleave', function() {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+        
+        // Solo cerrar si no está abierto por click
+        setTimeout(() => {
+            if (!hemogramaContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
+                closeDropdown();
+            }
+        }, 200);
+    });
+    
+    // Mantener abierto cuando el mouse está sobre el dropdown
+    dropdownContent.addEventListener('mouseenter', function() {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+    });
+    
+    dropdownContent.addEventListener('mouseleave', function() {
+        setTimeout(() => {
+            if (!hemogramaContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
+                closeDropdown();
+            }
+        }, 200);
+    });
+    
+    // Toggle del desplegable por click
     dropdownToggle.addEventListener('click', function(e) {
         console.log('CLICK EN HEMOGRAMA DROPDOWN');
         e.preventDefault();
@@ -752,24 +1311,21 @@ function initializeHemogramaDropdown() {
         const isOpen = dropdownContent.classList.contains('show');
         console.log('¿Está abierto?', isOpen);
         
-        // Cerrar todos los desplegables
-        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-            dropdown.classList.remove('show');
-        });
-        
-        // Toggle del desplegable actual
-        if (!isOpen) {
-            dropdownContent.classList.add('show');
-            document.body.classList.add('dropdown-open');
-            console.log('Dropdown de hemograma ABIERTO');
-        } else {
+        if (isOpen) {
+            // Si está abierto, cerrarlo
+            isClickOpen = false;
+            dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
-        }
-        
-        // Rotar el chevron
-        const chevron = this.querySelector('svg');
-        if (chevron) {
-            chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            
+            // Resetear chevron
+            const chevron = this.querySelector('svg');
+            if (chevron) {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        } else {
+            // Si está cerrado, abrirlo y marcarlo como abierto por click
+            isClickOpen = true;
+            openDropdown();
         }
     });
     
@@ -817,36 +1373,111 @@ function initializeRenalDropdown() {
     
     const dropdownToggle = document.querySelector('.renal-with-dropdown .dropdown-toggle-inline');
     const dropdownContent = document.getElementById('renal-dropdown');
+    const renalContainer = document.querySelector('.renal-with-dropdown');
     
-    if (!dropdownToggle || !dropdownContent) {
+    if (!dropdownToggle || !dropdownContent || !renalContainer) {
         console.warn('Elementos del desplegable de renal no encontrados');
         return;
     }
     
-    // Toggle del desplegable
+    let hoverTimeout = null;
+    let isClickOpen = false;
+    
+    // Función para abrir dropdown
+    function openDropdown() {
+        // Cerrar todos los otros desplegables
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+            if (dropdown !== dropdownContent) {
+                dropdown.classList.remove('show');
+            }
+        });
+        
+        dropdownContent.classList.add('show');
+        document.body.classList.add('dropdown-open');
+        
+        // Rotar el chevron
+        const chevron = dropdownToggle.querySelector('svg');
+        if (chevron) {
+            chevron.style.transform = 'rotate(180deg)';
+        }
+    }
+    
+    // Función para cerrar dropdown
+    function closeDropdown() {
+        if (!isClickOpen) {
+            dropdownContent.classList.remove('show');
+            document.body.classList.remove('dropdown-open');
+            
+            // Resetear chevron
+            const chevron = dropdownToggle.querySelector('svg');
+            if (chevron) {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+    }
+    
+    // Hover events para el contenedor completo
+    renalContainer.addEventListener('mouseenter', function() {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+            if (!dropdownContent.classList.contains('show')) {
+                openDropdown();
+            }
+        }, 1000); // 1 segundo de delay
+    });
+    
+    renalContainer.addEventListener('mouseleave', function() {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+        
+        // Solo cerrar si no está abierto por click
+        setTimeout(() => {
+            if (!renalContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
+                closeDropdown();
+            }
+        }, 200);
+    });
+    
+    // Mantener abierto cuando el mouse está sobre el dropdown
+    dropdownContent.addEventListener('mouseenter', function() {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+    });
+    
+    dropdownContent.addEventListener('mouseleave', function() {
+        setTimeout(() => {
+            if (!renalContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
+                closeDropdown();
+            }
+        }, 200);
+    });
+    
+    // Toggle del desplegable por click
     dropdownToggle.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         const isOpen = dropdownContent.classList.contains('show');
         
-        // Cerrar todos los desplegables
-        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-            dropdown.classList.remove('show');
-        });
-        
-        // Toggle del desplegable actual
-        if (!isOpen) {
-            dropdownContent.classList.add('show');
-            document.body.classList.add('dropdown-open');
-        } else {
+        if (isOpen) {
+            // Si está abierto, cerrarlo
+            isClickOpen = false;
+            dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
-        }
-        
-        // Rotar el chevron
-        const chevron = this.querySelector('svg');
-        if (chevron) {
-            chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            
+            // Resetear chevron
+            const chevron = this.querySelector('svg');
+            if (chevron) {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        } else {
+            // Si está cerrado, abrirlo y marcarlo como abierto por click
+            isClickOpen = true;
+            openDropdown();
         }
     });
     
@@ -871,4 +1502,63 @@ function initializeRenalDropdown() {
     }
     
     console.log('=== DESPLEGABLE DE RENAL INICIADO ===');
+}
+
+// Función para descargar tabla como PDF (requiere jsPDF)
+function descargarTablaComoPDF() {
+    const table = document.querySelector('.comparative-table');
+    
+    if (!table) {
+        mostrarNotificacion('No hay tabla para descargar', 'error');
+        return;
+    }
+    
+    // Verificar si jsPDF está disponible
+    if (typeof window.jsPDF === 'undefined') {
+        mostrarNotificacion('jsPDF no está disponible', 'error');
+        return;
+    }
+    
+    try {
+        const { jsPDF } = window.jsPDF;
+        const pdf = new jsPDF();
+        
+        // Título del PDF
+        pdf.setFontSize(16);
+        pdf.text('Tabla Comparativa - Extractor Médico', 20, 20);
+        
+        // Obtener datos de la tabla
+        const rows = table.querySelectorAll('tbody tr');
+        let yPosition = 40;
+        
+        pdf.setFontSize(12);
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 2) {
+                const parametro = cells[0].textContent.trim();
+                const valor = cells[1].textContent.trim();
+                
+                // Solo incluir filas con valores (no "-")
+                if (valor !== '-') {
+                    pdf.text(`${parametro}: ${valor}`, 20, yPosition);
+                    yPosition += 8;
+                    
+                    // Nueva página si es necesario
+                    if (yPosition > 280) {
+                        pdf.addPage();
+                        yPosition = 20;
+                    }
+                }
+            }
+        });
+        
+        // Descargar PDF
+        pdf.save(`tabla-comparativa-${new Date().toISOString().split('T')[0]}.pdf`);
+        mostrarNotificacion('PDF generado correctamente', 'success');
+        
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        mostrarNotificacion('Error al generar el PDF', 'error');
+    }
 }

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Médico - Visualización de Exámenes</title>
+    <link rel="stylesheet" href="dashboard-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' stroke='currentColor'><path d='M11.79 12 7 8.855m14-2.903L7 15.145M8 6.92c0 1.337-1.12 2.42-2.5 2.42S3 8.256 3 6.919C3 5.583 4.12 4.5 5.5 4.5S8 5.583 8 6.92m0 10.162c0-1.336-1.12-2.42-2.5-2.42S3 15.745 3 17.081 4.12 19.5 5.5 19.5 8 18.417 8 17.08m13 .968-6.066-3.983'/></svg>">
+    
+    <!-- Cargar dependencias -->
+    <script src="dashboard-types.js"></script>
+    <script src="medical-parser.js"></script>
+    <script src="dashboard-components.js"></script>
+    <script src="google-sheets-connector.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                    <div>
+                        <h1>Dashboard Médico</h1>
+                        <p class="header-subtitle">Visualización y análisis de exámenes médicos</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button id="loadUserDataBtn" class="header-button sample-btn" style="background: #9C27B0; border-color: #9C27B0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                        </svg>
+                        Probar tus Datos
+                    </button>
+                    
+                    <button id="loadSampleBtn" class="header-button sample-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                        </svg>
+                        Cargar Ejemplo
+                    </button>
+                    
+                    <button id="clearDataBtn" class="header-button clear-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1 2-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Data Input Section -->
+        <section class="data-input-section" id="dataInputSection">
+            <div class="input-card">
+                <div class="input-header">
+                    <h2>
+                        <svg class="section-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9.478 3H7.25A2.25 2.25 0 0 0 5 5.25v13.5A2.25 2.25 0 0 0 7.25 21h9a2.25 2.25 0 0 0 2.25-2.25V12M9.478 3c1.243 0 2.272 1.007 2.272 2.25V7.5A2.25 2.25 0 0 0 14 9.75h2.25A2.25 2.25 0 0 1 18.5 12M9.478 3c3.69 0 9.022 5.36 9.022 9M9 16.5h6m-6-3h4"/>
+                        </svg>
+                        Datos de Exámenes Médicos
+                    </h2>
+                    <div class="input-status" id="inputStatus">
+                        <span class="status-indicator waiting">Esperando datos...</span>
+                    </div>
+                </div>
+                
+                <div class="input-content">
+                    <!-- Google Sheets Section -->
+                    <div class="sheets-input-section">
+                        <div class="sheets-header">
+                            <h3>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                Cargar desde Google Sheets
+                            </h3>
+                            <button id="toggleSheetsBtn" class="toggle-sheets-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6,9 12,15 18,9"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div id="sheetsInputContent" class="sheets-content" style="display: none;">
+                            <div class="sheets-url-input">
+                                <input 
+                                    type="url" 
+                                    id="sheetsUrlInput" 
+                                    class="sheets-url-field" 
+                                    placeholder="https://docs.google.com/spreadsheets/d/TU_ID_DE_HOJA/edit#gid=0"
+                                />
+                                <button id="loadFromSheetsBtn" class="load-sheets-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17,8 12,3 7,8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    Cargar
+                                </button>
+                            </div>
+                            
+                            <div class="sheets-status" id="sheetsStatus">
+                                <span class="sheets-status-text">Pega el enlace de tu Google Sheet pública</span>
+                            </div>
+                            
+                            <div id="sheetsInstructions" class="sheets-instructions-container">
+                                <!-- Las instrucciones se cargarán aquí dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div class="input-separator">
+                        <div class="separator-line"></div>
+                        <span class="separator-text">O pega datos directamente</span>
+                        <div class="separator-line"></div>
+                    </div>
+                    
+                    <textarea 
+                        id="medicalDataInput" 
+                        class="data-textarea"
+                        placeholder="Pega aquí los datos tabulares de exámenes médicos.
+                        
+Formato esperado:
+Exámenes    29/07/2025  30/07/2025  31/07/2025
+Leucocitos (10³/uL)  -   03.01   3.42
+Hemoglobina (g/dL)   -   12.2    12.9
+Creatinina (mg/dL)   1.42   1.72    2.00
+
+Instrucciones:
+1. Copia los datos directamente desde Excel, PDF o cualquier formato tabular
+2. Asegúrate de incluir la fila de cabecera con fechas
+3. Los datos se procesarán automáticamente al pegarlos"></textarea>
+                    
+                    <div class="input-actions">
+                        <button id="parseDataBtn" class="parse-button" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="16,18 22,12 16,6"></polyline>
+                                <path d="M8,6H2v6l6,6"></path>
+                            </svg>
+                            Procesar Datos
+                        </button>
+                        
+                        <div class="input-info" id="inputInfo">
+                            <span class="info-text">Pega los datos y se procesarán automáticamente</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Content -->
+        <main class="dashboard-main" id="dashboardContent" style="display: none;">
+            <!-- Metrics Section -->
+            <section class="metrics-section">
+                <div id="metricsContainer">
+                    <!-- Las métricas se generarán dinámicamente aquí -->
+                </div>
+            </section>
+
+            <!-- Charts and Analysis Section -->
+            <section class="analysis-section">
+                <div class="analysis-grid">
+                    <!-- Charts Column -->
+                    <div class="charts-column">
+                        <div class="chart-card">
+                            <div id="lineChartContainer">
+                                <!-- El gráfico de líneas se generará aquí -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Critical Parameters Column -->
+                    <div class="critical-column">
+                        <div class="critical-card">
+                            <div class="critical-header">
+                                <h3>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                    Parámetros Críticos
+                                </h3>
+                            </div>
+                            <div id="criticalParametersContainer">
+                                <!-- Los parámetros críticos se generarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Table Section -->
+            <section class="table-section">
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3h18v18H3zM21 9H3M21 15H3M12 3v18"></path>
+                            </svg>
+                            Datos Detallados por Fecha
+                        </h3>
+                        
+                        <div class="table-actions">
+                            <button id="exportTableBtn" class="table-action-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7,10 12,15 17,10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="dataTableContainer">
+                        <!-- La tabla de datos se generará aquí -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-content">
+                <svg class="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                <h3>Sin datos médicos</h3>
+                <p>Pega los datos de exámenes médicos en el área de texto superior para comenzar el análisis.</p>
+                
+                <div class="empty-actions">
+                    <button id="loadSampleBtn2" class="sample-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                        </svg>
+                        Cargar Datos de Ejemplo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification" style="display: none;">
+        <div class="notification-content">
+            <span class="notification-icon">✓</span>
+            <span class="notification-text"></span>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Procesando datos médicos...</span>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="dashboard-main.js"></script>
+</body>
+</html>
