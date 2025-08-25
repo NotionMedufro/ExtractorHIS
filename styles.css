@@ -13,6 +13,10 @@ body {
     min-height: 100vh;
 }
 
+html {
+    overflow: visible;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -327,7 +331,7 @@ body {
 
 .selection-item {
     display: flex;
-    align-items: center;
+    align-items: left;
     padding: 15px;
     border: 2px solid rgba(233, 236, 239, 0.6);
     border-radius: 10px;
@@ -400,7 +404,7 @@ body {
 
 .selection-item-compact {
     display: flex;
-    align-items: center;
+    align-items: left;
     padding: 6px 10px;
     border: 1px solid rgba(229, 231, 235, 0.6);
     border-radius: 5px;
@@ -410,7 +414,16 @@ body {
     backdrop-filter: blur(8px);
     font-size: 0.8rem;
     min-height: 32px;
+    position: relative;
 }
+
+body.dropdown-open .selection-item-with-dropdown {
+}
+
+body.dropdown-open .selection-item-compact {
+}
+
+
 
 .selection-item-compact:hover {
     border-color: rgba(59, 130, 246, 0.8);
@@ -773,6 +786,10 @@ body {
     .container {
         padding: 10px;
     }
+
+    .two-column-layout {
+        flex-direction: column;
+    }
     
     .header h1 {
         font-size: 1.5rem;
@@ -780,10 +797,6 @@ body {
     
     .parametros {
         padding: 15px;
-    }
-    
-    .right-column, .left-column {
-        min-width: 100%;
     }
     
     .selection-grid-compact {
@@ -1238,16 +1251,6 @@ footer {
     }
 }
 
-/* Estilos para el desplegable de hemograma */
-.selection-item-with-dropdown {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    grid-column: span 1;
-    z-index: 10;
-    overflow: visible;
-}
 
 .hemograma-with-dropdown {
     position: relative;
@@ -1271,7 +1274,7 @@ footer {
     opacity: 0.7;
     min-width: 20px;
     height: 20px;
-    margin-left: 4px;
+    margin-left: auto;
     flex-shrink: 0;
 }
 
@@ -1290,17 +1293,69 @@ footer {
 
 .dropdown-content {
     display: none;
-    position: fixed;
+    position: absolute;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(229, 231, 235, 0.8);
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
-    z-index: 999999;
+    z-index: 9999 !important;
     padding: 8px;
     animation: slideDown 0.2s ease-out;
-    min-width: 280px;
-    max-width: 320px;
+    /* Ahora el tamaño es dinámico para ajustarse al contenido */
+    width: max-content;
+    min-width: 220px;
+    max-width: 400px;
+    height: auto;
+    min-height: 220px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Asegurar que los contenedores de dropdown tengan position relative */
+.selection-item-with-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    grid-column: span 1;
+    overflow: visible;
+    justify-content: space-between;
+}
+
+/* Alinear texto a la izquierda y el toggle a la derecha sin romper el ellipsis */
+.selection-item-with-dropdown .selection-label-compact {
+  flex: 1;
+  min-width: 0; /* necesario para que text-overflow: ellipsis funcione en flex */
+  text-align: left;
+}
+
+/* Forzar ancho uniforme de botones en el grid compacto */
+.selection-grid-compact .selection-item-with-dropdown,
+.selection-grid-compact .selection-item-compact {
+  width: 100%;
+}
+
+/* Asegurar que el grid no corte los dropdowns */
+.selection-grid-compact {
+    overflow: visible;
+}
+
+/* Asegurar que el step-card no corte los dropdowns */
+.step-card {
+    overflow: visible;
+}
+
+/* Estilos específicos para el dropdown de hemograma */
+#hemograma-dropdown {
+    top: 100%;
+    left: 0;
+}
+
+/* Estilos específicos para el dropdown de renal */
+#renal-dropdown {
+    top: 100%;
+    left: 0;
 }
 
 .dropdown-header {
@@ -1349,10 +1404,14 @@ footer {
 }
 
 .dropdown-content.show {
-    display: block !important;
+    display: block;
     opacity: 1;
     transform: translateY(0);
     visibility: visible;
+    background: rgba(255, 255, 255, 0.98);
+    animation: slideDown 0.2s ease-out;
+    z-index: 9999 !important;
+    position: absolute;
 }
 
 @keyframes slideDown {
@@ -1390,6 +1449,7 @@ footer {
 .dropdown-item .selection-label-compact {
     font-size: 13px;
     color: #374151;
+    z-index: 2 !important;
 }
 
 /* Responsive adjustments */
@@ -1422,3 +1482,5 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+
+
