@@ -308,6 +308,8 @@ html {
     border: 1px solid var(--border-primary);
     transition: all 0.3s ease;
     box-shadow: var(--shadow-sm);
+    position: relative;
+    z-index: 1;
 }
 
 .step-card:hover {
@@ -1472,12 +1474,12 @@ footer {
 .dropdown-content {
     display: none;
     position: absolute;
-    background: rgba(255, 255, 255, 0.98);
+    background: var(--bg-dropdown);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(229, 231, 235, 0.8);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
-    z-index: 9999 !important;
+    box-shadow: var(--shadow-dropdown);
+    z-index: 99999 !important;
     padding: 8px;
     animation: slideDown 0.2s ease-out;
     /* Ahora el tamaño es dinámico para ajustarse al contenido */
@@ -1488,6 +1490,7 @@ footer {
     min-height: 220px;
     max-height: 60vh;
     overflow-y: auto;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 /* Asegurar que los contenedores de dropdown tengan position relative */
