@@ -169,7 +169,16 @@ class ExtractorMedico {
         const match = this.texto.match(PATRONES_EXTRACCION.fecha);
         if (match) {
             const fechaCompleta = match[1];
-            // Extraer solo dd/mm y agregar solo dos puntos (sin <br>)
+            // Convertir dd/mm/yyyy o dd-mm-yyyy a dd/mm/yy
+            const fechaLimpia = fechaCompleta.replace(/-/g, '/'); // Normalizar separadores
+            const partes = fechaLimpia.split('/');
+            if (partes.length === 3) {
+                const dia = partes[0].padStart(2, '0');
+                const mes = partes[1].padStart(2, '0');
+                const año = partes[2].substring(2); // Solo últimos 2 dígitos del año
+                return `${dia}/${mes}/${año}:`;
+            }
+            // Fallback: extraer solo dd/mm y agregar dos puntos
             return fechaCompleta.substring(0, 5) + ':';
         }
         return null;

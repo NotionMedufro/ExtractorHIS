@@ -281,7 +281,16 @@ class SimpleExtractor {
             let coincidencia = this.texto.match(patron);
             if (coincidencia) {
                 let fechaCompleta = coincidencia[1];
-                // Extraer solo día/mes y agregar dos puntos: dd/mm:
+                // Convertir dd/mm/yyyy o dd-mm-yyyy a dd/mm/yy
+                const fechaLimpia = fechaCompleta.replace(/-/g, '/'); // Normalizar separadores
+                const partes = fechaLimpia.split('/');
+                if (partes.length === 3) {
+                    const dia = partes[0].padStart(2, '0');
+                    const mes = partes[1].padStart(2, '0');
+                    const año = partes[2].substring(2); // Solo últimos 2 dígitos del año
+                    return `${dia}/${mes}/${año}:`;
+                }
+                // Fallback: extraer solo dd/mm y agregar dos puntos
                 return fechaCompleta.substring(0, 5) + ':';
             }
         }

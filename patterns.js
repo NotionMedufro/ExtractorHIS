@@ -140,6 +140,7 @@ const EXTRACTION_PATTERNS = {
     fechas: {
         // Múltiples patrones para extraer fechas
         patrones: [
+            /Recepcion\s+muestra\s*:\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i,        // "Recepcion muestra: dd/mm/yyyy" o "Recepcion muestra: dd-mm-yyyy"
             /Fecha\s+(\d{2}\/\d{2}\/\d{4})/i,                              // "Fecha dd/mm/yyyy"
             /Toma Muestra:\s*(\d{2}\/\d{2}\/\d{4})/i,                      // "Toma Muestra: dd/mm/yyyy"
             /Fecha\/Hora de T\. muestra\s*:\s*(\d{2}\/\d{2}\/\d{4})/i,     // "Fecha/Hora de T. muestra : dd/mm/yyyy"
