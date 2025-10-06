@@ -58,8 +58,8 @@ const EXTRACTION_PATTERNS = {
         // Bilirrubina Total: busca "Bilirrubina Total" seguido de números
         bilirrubina_total: /(?:Bilirrubina Total|BILIRRUBINA TOTAL)\s*[hi*]*\s*(\d+\.?\d*)\s*mg\/dL/i,
         
-        // Bilirrubina Directa: busca "Bilirrubina Directa" seguido de números
-        bilirrubina_directa: /Bilirrubina Directa\s*\*?\s*(\d+\.?\d*)\s*mg\/dL/i,
+        // Bilirrubina Directa: busca "Bilirrubina Directa" o "BILIRRUBINA DIRECTA" seguido de números
+        bilirrubina_directa: /(?:Bilirrubina Directa|BILIRRUBINA DIRECTA)\s*[hi*]*\s*(\d+\.?\d*)\s*mg\/dL/i,
         
         // GOT/ASAT: múltiples patrones para transaminasas
         got_asat: [
@@ -78,8 +78,17 @@ const EXTRACTION_PATTERNS = {
         // Fosfatasa Alcalina: busca "Fosfatasa Alcalina" o "FOSFATASAS ALCALINAS"
         fosfatasa_alcalina: /(?:Fosfatasa Alcalina|FOSFATASAS ALCALINAS)\s*[hi*]*\s*(\d+\.?\d*)\s*U\/L/i,
         
-        // GGT: busca "Gamma Glutamiltranspeptidasa"
-        ggt: /Gamma Glutamiltranspeptidasa\s*\*?\s*(\d+\.?\d*)\s*U\/L/i
+        // GGT: busca "Gamma Glutamiltranspeptidasa" o "GAMAGLUTAMIL TRANSFERASA (GGT)"
+        ggt: [
+            /Gamma Glutamiltranspeptidasa\s*\*?\s*(\d+\.?\d*)\s*U\/L/i,
+            /GAMAGLUTAMIL TRANSFERASA \(GGT\)\s*[hi]*\s*(\d+\.?\d*)\s*U\/L/i
+        ],
+        
+        // Amilasa: busca "AMILASA"
+        amilasa: /AMILASA\s*[hi]*\s*(\d+\.?\d*)\s*U\/L/i,
+        
+        // Lipasa: busca "LIPASA"
+        lipasa: /LIPASA\s*[hi]*\s*(\d+\.?\d*)\s*U\/L/i
     },
 
     // ============== NUTRICIONAL ==============
@@ -112,13 +121,16 @@ const EXTRACTION_PATTERNS = {
     // ============== COAGULACIÓN ==============
     coagulacion: {
         // INR: busca "INR" seguido de números
-        inr: /INR[\s\S]{0,20}(\d+\.?\d*)/i,
+        inr: /INR\s*[hi]*\s*(\d+\.?\d*)/i,
         
-        // Tiempo de Protrombina: busca "Tiempo de Protrombina"
-        tiempo_protrombina: /Tiempo de Protrombina[\s\S]*?(\d+\.?\d*)\s+seg/i,
+        // Tiempo de Protrombina: busca "TIEMPO DE PROTROMBINA" con segundos
+        tiempo_protrombina: /TIEMPO DE PROTROMBINA\s*[hi]*\s*(\d+\.?\d*)\s*Segundos/i,
         
-        // TTPA: busca "TTPA"
-        ttpa: /TTPA[\s\S]*?(\d+\.?\d*)\s+seg/i
+        // %TP: busca "% TP" 
+        porcentaje_tp: /%\s*TP\s*[hi]*\s*(\d+\.?\d*)\s*%/i,
+        
+        // TTPA: busca "TIEMPO DE TROMBOPLASTINA PARCIAL ACTIVADO"
+        ttpa: /TIEMPO DE TROMBOPLASTINA PARCIAL\s+ACTIVADO\s*[hi]*\s*(\d+\.?\d*)\s*Segundos/i
     },
 
     // ============== GASES EN SANGRE ==============

@@ -113,6 +113,20 @@ class SimpleExtractor {
         if (magnesio) {
             resultados.push(`Mg: ${magnesio}`);
         }
+        
+        // 8. AMILASA (redondear a entero)
+        const amilasa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.amilasa);
+        if (amilasa) {
+            const amilFormateada = Math.round(parseFloat(amilasa));
+            resultados.push(`Amil: ${amilFormateada}`);
+        }
+        
+        // 9. LIPASA (redondear a entero)
+        const lipasa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.lipasa);
+        if (lipasa) {
+            const lipFormateada = Math.round(parseFloat(lipasa));
+            resultados.push(`Lip: ${lipFormateada}`);
+        }
 
         return this.limpiarAsteriscos(resultados.join(', '));
     }
@@ -121,47 +135,43 @@ class SimpleExtractor {
     extraerHepatico() {
         let resultados = [];
 
-        // 1. BILIRRUBINA TOTAL
-        const biliTotal = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.bilirrubina_total);
-        if (biliTotal) {
-            resultados.push(`BiliT: ${biliTotal}`);
+        // 1. BILIRRUBINA TOTAL/DIRECTA -> BiliT/D: 0.49/0.38
+        const biliT = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.bilirrubina_total);
+        const biliD = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.bilirrubina_directa);
+        if (biliT || biliD) {
+            const bt = biliT ? biliT : '--';
+            const bd = biliD ? biliD : '--';
+            resultados.push(`BiliT/D: ${bt}/${bd}`);
         }
 
-        // 2. GOT/GPT (Transaminasas)
+        // 2. GOT/GPT (Transaminasas) - sin decimales
         const got = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.got_asat);
         const gpt = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.gpt_alt);
         
         if (got && gpt) {
-            const gotFormateado = this.formatearNumero(got);
-            const gptFormateado = this.formatearNumero(gpt);
+            const gotFormateado = Math.round(parseFloat(got));
+            const gptFormateado = Math.round(parseFloat(gpt));
             resultados.push(`GOT/GPT: ${gotFormateado}/${gptFormateado}`);
         } else if (got) {
-            const gotFormateado = this.formatearNumero(got);
+            const gotFormateado = Math.round(parseFloat(got));
             resultados.push(`GOT: ${gotFormateado}`);
         } else if (gpt) {
-            const gptFormateado = this.formatearNumero(gpt);
+            const gptFormateado = Math.round(parseFloat(gpt));
             resultados.push(`GPT: ${gptFormateado}`);
         }
 
         // 3. FOSFATASA ALCALINA
         const fa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.fosfatasa_alcalina);
         if (fa) {
-            const faFormateada = this.formatearNumero(fa);
+            const faFormateada = Math.round(parseFloat(fa));
             resultados.push(`FA: ${faFormateada}`);
         }
 
-        // 4. ALBÚMINA
-        const albumina = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.albumina);
-        if (albumina) {
-            const albFormateada = this.formatearNumero(albumina);
-            resultados.push(`Alb: ${albFormateada}`);
-        }
-
-        // 5. PROTEÍNAS TOTALES
-        const proteinas = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.proteinas);
-        if (proteinas) {
-            const protFormateadas = this.formatearNumero(proteinas);
-            resultados.push(`Prot: ${protFormateadas}`);
+        // 4. GGT
+        const ggt = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.ggt);
+        if (ggt) {
+            const ggtFormateada = Math.round(parseFloat(ggt));
+            resultados.push(`GGT: ${ggtFormateada}`);
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
@@ -171,10 +181,10 @@ class SimpleExtractor {
     extraerPCR() {
         let resultados = [];
 
-        // 1. PCR (Proteína C Reactiva) - redondear a 1 decimal
+        // 1. PCR (Proteína C Reactiva) - redondear a entero
         const pcr = extraerValor(this.texto, EXTRACTION_PATTERNS.pcr.pcr);
         if (pcr) {
-            const pcrFormateada = parseFloat(pcr).toFixed(1);
+            const pcrFormateada = Math.round(parseFloat(pcr));
             resultados.push(`PCR: ${pcrFormateada}`);
         }
 
@@ -197,22 +207,27 @@ class SimpleExtractor {
     extraerCoagulacion() {
         let resultados = [];
 
-        // 1. INR
+        // 1. INR (1 decimal)
         const inr = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.inr);
         if (inr) {
-            resultados.push(`INR: ${inr}`);
+            const inrFormateado = parseFloat(inr).toFixed(1);
+            resultados.push(`INR: ${inrFormateado}`);
         }
 
-        // 2. TIEMPO DE PROTROMBINA
+        // 2. TIEMPO DE PROTROMBINA + %TP
         const pt = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.tiempo_protrombina);
+        const ptPct = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.porcentaje_tp);
         if (pt) {
-            resultados.push(`PT: ${pt}`);
+            const ptSeg = Math.round(parseFloat(pt));
+            const pctPart = ptPct ? ` (${Math.round(parseFloat(ptPct))}%)` : '';
+            resultados.push(`TP: ${ptSeg}s${pctPart}`);
         }
 
         // 3. TTPA
-        const ptt = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.ttpa);
-        if (ptt) {
-            resultados.push(`PTT: ${ptt}`);
+        const ttpa = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.ttpa);
+        if (ttpa) {
+            const ttpaFormateado = Math.round(parseFloat(ttpa));
+            resultados.push(`TTPa: ${ttpaFormateado}s`);
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
@@ -300,51 +315,98 @@ class SimpleExtractor {
     // ============== FUNCIÓN PRINCIPAL ==============
     procesar(texto, opcionesSeleccionadas) {
         this.texto = texto;
-        let resultados = [];
+        let lineas = [];
 
         // Agregar fecha si está seleccionada
+        let fecha = '';
         if (opcionesSeleccionadas.includes('Fecha')) {
-            const fecha = this.extraerFecha();
-            if (fecha) resultados.push(fecha);
+            fecha = this.extraerFecha();
         }
 
         // Procesar cada tipo de examen seleccionado
+        let secciones = [];
+        
         if (opcionesSeleccionadas.includes('Hemograma')) {
             const hemograma = this.extraerHemograma();
-            if (hemograma) resultados.push(hemograma);
+            if (hemograma) secciones.push(hemograma);
         }
 
         if (opcionesSeleccionadas.includes('PCR')) {
             const pcr = this.extraerPCR();
-            if (pcr) resultados.push(pcr);
+            if (pcr) secciones.push(pcr);
         }
 
         if (opcionesSeleccionadas.includes('Renal')) {
             const renal = this.extraerRenal();
-            if (renal) resultados.push(renal);
+            if (renal) secciones.push(renal);
         }
 
         if (opcionesSeleccionadas.includes('Hepático')) {
             const hepatico = this.extraerHepatico();
-            if (hepatico) resultados.push(hepatico);
+            if (hepatico) secciones.push(hepatico);
         }
 
         if (opcionesSeleccionadas.includes('Coagulación')) {
             const coagulacion = this.extraerCoagulacion();
-            if (coagulacion) resultados.push(coagulacion);
+            if (coagulacion) secciones.push(coagulacion);
         }
 
         if (opcionesSeleccionadas.includes('Nutricional')) {
             const nutricional = this.extraerNutricional();
-            if (nutricional) resultados.push(nutricional);
+            if (nutricional) secciones.push(nutricional);
         }
 
         if (opcionesSeleccionadas.includes('Gases')) {
             const gases = this.extraerGases();
-            if (gases) resultados.push(gases);
+            if (gases) secciones.push(gases);
         }
 
-        return resultados.join('\n');
+        // Formatear el resultado según el patrón esperado
+        if (secciones.length === 0) {
+            return fecha ? fecha : 'No se encontraron datos';
+        }
+
+        // Organizar las secciones en líneas específicas según el patrón esperado
+        const resultado = this.formatearResultadoEstructurado(fecha, secciones);
+        return resultado;
+    }
+    
+    // Función auxiliar para formatear el resultado con estructura específica
+    formatearResultadoEstructurado(fecha, secciones) {
+        let resultado = fecha ? fecha + '\n' : '';
+        
+        // Unir todas las secciones con comas y espacios
+        const todasLasSecciones = secciones.join(', ');
+        
+        // Separar en líneas más legibles
+        // Primera línea: Hemograma + PCR
+        // Segunda línea: Renal + extras
+        // Tercera línea: Hepático
+        // Cuarta línea: Coagulación
+        
+        const lineas = [];
+        let lineaActual = '';
+        const maxPorLinea = 80; // Aproximadamente 80 caracteres por línea
+        
+        const partes = todasLasSecciones.split(', ');
+        
+        for (const parte of partes) {
+            if (lineaActual === '') {
+                lineaActual = parte;
+            } else if ((lineaActual + ', ' + parte).length <= maxPorLinea) {
+                lineaActual += ', ' + parte;
+            } else {
+                lineas.push(lineaActual + ', ');
+                lineaActual = parte;
+            }
+        }
+        
+        if (lineaActual) {
+            lineas.push(lineaActual);
+        }
+        
+        resultado += lineas.join('\n');
+        return resultado;
     }
 }
 

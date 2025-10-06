@@ -270,9 +270,9 @@ class ExtractorMedico {
     extraerPCR() {
         const valores = [];
 
-        // PCR - formato: PCR: 4.5
+        // PCR - formato: PCR: 44 (sin decimales)
         const pcr = this.extraerValor(PATRONES_EXTRACCION.pcr, (valor) => {
-            return `PCR: ${parseFloat(valor).toFixed(1)}`;
+            return `PCR: ${Math.round(parseFloat(valor))}`;
         });
         if (pcr) valores.push(pcr);
         

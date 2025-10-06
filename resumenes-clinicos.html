@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resúmenes Clínicos - MedUfro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="resumenes-styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="logo">
+                        <i class="fas fa-stethoscope"></i>
+                        Resúmenes Clínicos
+                        <span class="logo-subtitle">MedUfro</span>
+                    </h1>
+                    <div class="header-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="totalPatologias">0</span>
+                            <span class="stat-label">Patologías</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="lastUpdate">--</span>
+                            <span class="stat-label">Última actualización</span>
+                        </div>
+                        <button class="sync-btn" id="syncBtn" title="Sincronizar con Notion">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Sincronizar</span>
+                        </button>
+                    </div>
+                </div>
+                <p class="header-description">Base de conocimientos médicos sincronizada desde Notion</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Barra de búsqueda y filtros -->
+            <section class="search-section">
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar patologías, definiciones, síntomas...">
+                        <button class="search-clear" id="searchClear" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <button class="filter-toggle" id="filterToggle">
+                        <i class="fas fa-filter"></i>
+                        Filtros
+                        <span class="filter-count" id="filterCount" style="display: none;"></span>
+                    </button>
+                </div>
+                
+                <div class="filters-panel" id="filtersPanel">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">Ramos:</label>
+                            <div class="filter-buttons" id="ramoFilters">
+                                <button class="filter-btn active" data-filter="all">Todos</button>
+                                <!-- Se llenarán dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Categorías:</label>
+                            <div class="filter-buttons" id="categoryFilters">
+                                <button class="filter-btn active" data-filter="all">Todas</button>
+                                <!-- Se llenarán dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">Ver solo con contenido:</label>
+                            <div class="filter-checkboxes">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasDefinicion">
+                                    <span class="checkmark"></span>
+                                    Con Definición
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasClinica">
+                                    <span class="checkmark"></span>
+                                    Con Clínica
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="hasManejo">
+                                    <span class="checkmark"></span>
+                                    Con Manejo
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-actions">
+                        <button class="btn-secondary" id="clearFilters">Limpiar Filtros</button>
+                        <button class="btn-primary" id="applyFilters">Aplicar Filtros</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Estado de carga -->
+            <div class="loading" id="loading">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <p>Cargando resúmenes clínicos...</p>
+            </div>
+
+            <!-- Indicador de resultados -->
+            <div class="results-info" id="resultsInfo" style="display: none;">
+                <span class="results-count">
+                    Mostrando <strong id="visibleCount">0</strong> de <strong id="totalCount">0</strong> patologías
+                </span>
+                <div class="view-options">
+                    <button class="view-btn active" data-view="cards" id="cardsView">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="view-btn" data-view="list" id="listView">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid de tarjetas -->
+            <section class="cards-section">
+                <div class="cards-grid" id="cardsGrid">
+                    <!-- Las tarjetas se generarán dinámicamente -->
+                </div>
+                <div class="list-view" id="listContainer" style="display: none;">
+                    <!-- Vista de lista -->
+                </div>
+            </section>
+
+            <!-- Mensaje cuando no hay resultados -->
+            <div class="no-results" id="noResults" style="display: none;">
+                <div class="no-results-content">
+                    <i class="fas fa-search-minus"></i>
+                    <h3>No se encontraron resultados</h3>
+                    <p>Intenta con otros términos de búsqueda o modifica los filtros</p>
+                    <button class="btn-primary" id="clearSearch">Limpiar búsqueda</button>
+                </div>
+            </div>
+
+            <!-- Error state -->
+            <div class="error-state" id="errorState" style="display: none;">
+                <div class="error-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error al cargar datos</h3>
+                    <p id="errorMessage">No se pudieron cargar los resúmenes clínicos</p>
+                    <button class="btn-primary" id="retryLoad">Reintentar</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para mostrar detalles completos -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="detailModal">
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <h2 id="modalTitle"></h2>
+                    <div class="modal-badges" id="modalBadges"></div>
+                </div>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="modal-navigation">
+                    <button class="nav-btn" data-section="definicion">
+                        <i class="fas fa-book"></i>
+                        Definición
+                    </button>
+                    <button class="nav-btn" data-section="epidemiologia">
+                        <i class="fas fa-chart-bar"></i>
+                        Epidemiología
+                    </button>
+                    <button class="nav-btn" data-section="etiopatogenia">
+                        <i class="fas fa-dna"></i>
+                        Etiopatogenia
+                    </button>
+                    <button class="nav-btn" data-section="clinica">
+                        <i class="fas fa-user-md"></i>
+                        Clínica
+                    </button>
+                    <button class="nav-btn" data-section="clasificacion">
+                        <i class="fas fa-sitemap"></i>
+                        Clasificación
+                    </button>
+                    <button class="nav-btn" data-section="diagnostico">
+                        <i class="fas fa-microscope"></i>
+                        Diagnóstico
+                    </button>
+                    <button class="nav-btn" data-section="manejo">
+                        <i class="fas fa-pills"></i>
+                        Manejo
+                    </button>
+                    <button class="nav-btn" data-section="diferenciales">
+                        <i class="fas fa-balance-scale"></i>
+                        Dx. Diferenciales
+                    </button>
+                </div>
+                <div class="modal-content-sections" id="modalContentSections">
+                    <!-- El contenido se cargará dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 MedUfro - Resúmenes Clínicos</p>
+                <p class="footer-note">Datos sincronizados desde Notion API</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="notion-config.js"></script>
+    <script src="sync-manager.js"></script>
+    <script src="resumenes-script.js"></script>
+</body>
+</html>
