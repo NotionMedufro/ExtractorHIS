@@ -733,7 +733,11 @@ function mostrarResultados(resultado) {
     const resultsStatus = document.getElementById('resultsStatus');
     const copyArea = document.getElementById('copyArea');
     
-    const htmlResult = resultado.replace(/\n/g, '<br>');
+    // Convertir tanto saltos de línea normales como soft line breaks a <br> para visualización
+    const htmlResult = resultado
+        .replace(/\n/g, '<br>')           // Saltos de línea normales
+        .replace(/\u2028/g, '<br>');      // Line Separator (soft line break)
+    
     resultsDiv.innerHTML = htmlResult;
     
     // Guardar el texto original con saltos de línea para la función de copia

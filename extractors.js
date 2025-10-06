@@ -375,7 +375,10 @@ class SimpleExtractor {
     
     // Función auxiliar para formatear el resultado con estructura específica
     formatearResultadoEstructurado(fecha, secciones) {
-        let resultado = fecha ? fecha + '\n' : '';
+        // Usar caracter especial que simula Shift+Enter en procesadores de texto
+        const SOFT_LINE_BREAK = '\u2028'; // Line Separator Unicode - equivale a Shift+Enter
+        
+        let resultado = fecha ? fecha + SOFT_LINE_BREAK : '';
         
         // Organizar secciones en líneas según el formato esperado:
         // Línea 1: Hemograma + PCR
@@ -425,7 +428,7 @@ class SimpleExtractor {
             lineas.push(linea4.join(', '));
         }
         
-        resultado += lineas.join('\n');
+        resultado += lineas.join(SOFT_LINE_BREAK);
         return resultado;
     }
 }
