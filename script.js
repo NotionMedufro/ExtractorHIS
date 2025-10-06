@@ -451,7 +451,7 @@ class ExtractorMedico {
 }
 
 // INSTANCIA GLOBAL
-const extractor = new ExtractorMedico();
+const extractor = new SimpleExtractor();
 
 // ===== SISTEMA DE MÚLTIPLES EXÁMENES =====
 let examCounter = 1;
@@ -681,7 +681,7 @@ function extraerAutomaticamente() {
             }
 
             // Extraer datos del examen
-            const resultado = extractor.extraer(examen.texto, opcionesSeleccionadas);
+            const resultado = extractor.procesar(examen.texto, opcionesSeleccionadas);
             
             if (resultado && resultado.trim()) {
                 // Agregar encabezado del examen si hay múltiples exámenes
