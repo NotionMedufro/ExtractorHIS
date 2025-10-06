@@ -797,27 +797,145 @@ function copiarResultadoHTML() {
         return;
     }
     
-    // Convertir saltos de línea especiales a <br> para HTML
+    // Crear diferentes versiones de HTML para máxima compatibilidad con Summernote
     const htmlResult = resultText
-        .replace(/\n/g, '<br>')           // Saltos de línea normales
-        .replace(/\u2028/g, '<br>');      // Line Separator (soft line break)
+        .replace(/\n/g, '<br />')           // Saltos de línea normales con XHTML
+        .replace(/\u2028/g, '<br />');      // Line Separator con XHTML
     
-    // Copiar tanto texto plano como HTML al portapapeles
+    // Versión con div para Summernote (algunos editores prefieren divs)
+    const htmlWithDivs = resultText
+        .split(/\n|\u2028/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => `<div>${line}</div>`)
+        .join('');
+    
+    // Versión con p tags
+    const htmlWithP = `<p>${resultText
+        .replace(/\n/g, '<br />')
+        .replace(/\u2028/g, '<br />')}</p>`;
+    
+    // Copiar múltiples formatos al portapapeles
     if (navigator.clipboard && navigator.clipboard.write) {
         const clipboardItem = new ClipboardItem({
-            'text/html': new Blob([htmlResult], { type: 'text/html' }),
+            'text/html': new Blob([htmlWithP], { type: 'text/html' }), // Formato principal
             'text/plain': new Blob([resultText], { type: 'text/plain' })
         });
         
         navigator.clipboard.write([clipboardItem]).then(() => {
-            mostrarNotificacion('Resultado HTML copiado al portapapeles', 'success');
-        }).catch(() => {
-            // Fallback: copiar solo como texto
-            copiarResultado();
+            mostrarNotificacion('Resultado HTML copiado (prueba pegando en Summernote)', 'success');
+        }).catch((error) => {
+            console.error('Error copiando como HTML:', error);
+            // Fallback: usar método alternativo
+            copiarHTMLFallback(htmlWithP, resultText);
         });
     } else {
         // Fallback para navegadores que no soportan ClipboardItem
-        copiarResultado();
+        copiarHTMLFallback(htmlWithP, resultText);
+    }
+}
+
+// Función fallback para copiar HTML
+function copiarHTMLFallback(htmlContent, textContent) {
+    // Crear un elemento temporal invisible para copiar HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'fixed';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '-9999px';
+    tempDiv.innerHTML = htmlContent;
+    document.body.appendChild(tempDiv);
+    
+    try {
+        // Seleccionar el contenido
+        const range = document.createRange();
+        range.selectNodeContents(tempDiv);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Intentar copiar
+        const successful = document.execCommand('copy');
+        
+        if (successful) {
+            mostrarNotificacion('HTML copiado (método alternativo)', 'success');
+        } else {
+            // Último recurso: copiar como texto
+            navigator.clipboard.writeText(textContent).then(() => {
+                mostrarNotificacion('Copiado como texto plano', 'info');
+            });
+        }
+    } catch (error) {
+        console.error('Error en fallback:', error);
+        // Último recurso: copiar como texto
+        navigator.clipboard.writeText(textContent).then(() => {
+            mostrarNotificacion('Copiado como texto plano', 'info');
+        });
+    } finally {
+        // Limpiar
+        document.body.removeChild(tempDiv);
+        window.getSelection().removeAllRanges();
+    }
+}
+
+// Función especializada para Summernote
+function copiarParaSummernote() {
+    const resultsDiv = document.getElementById('results');
+    const resultText = resultsDiv.getAttribute('data-original-text') || resultsDiv.textContent;
+    
+    if (!resultText) {
+        mostrarNotificacion('No hay resultados para copiar', 'error');
+        return;
+    }
+    
+    // Crear contenido HTML estructurado específicamente para Summernote
+    // Summernote funciona mejor con párrafos y <br> dentro de ellos
+    const lines = resultText.split(/\n|\u2028/);
+    let htmlContent = '';
+    
+    if (lines.length > 0) {
+        // Primera línea (fecha) como párrafo separado
+        if (lines[0] && lines[0].trim()) {
+            htmlContent += `<p><strong>${lines[0].trim()}</strong></p>`;
+        }
+        
+        // Resto de líneas como un párrafo con saltos de línea
+        const remainingLines = lines.slice(1).filter(line => line.trim());
+        if (remainingLines.length > 0) {
+            htmlContent += `<p>${remainingLines.join('<br>')}</p>`;
+        }
+    }
+    
+    // Método de copia específico que Summernote entiende mejor
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.style.position = 'fixed';
+    tempTextArea.style.left = '-9999px';
+    tempTextArea.value = htmlContent;
+    document.body.appendChild(tempTextArea);
+    
+    try {
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 99999); // Para dispositivos móviles
+        
+        // Copiar el HTML como texto para que Summernote lo interprete
+        const successful = document.execCommand('copy');
+        
+        if (successful) {
+            mostrarNotificacion('HTML para Summernote copiado - pega con Ctrl+Shift+V', 'success');
+        } else {
+            // Fallback: usar clipboard API
+            navigator.clipboard.writeText(htmlContent).then(() => {
+                mostrarNotificacion('HTML copiado - pega con Ctrl+Shift+V en Summernote', 'success');
+            });
+        }
+    } catch (error) {
+        console.error('Error copiando para Summernote:', error);
+        navigator.clipboard.writeText(htmlContent).then(() => {
+            mostrarNotificacion('HTML copiado - pega con Ctrl+Shift+V en Summernote', 'success');
+        }).catch(() => {
+            mostrarNotificacion('Error al copiar', 'error');
+        });
+    } finally {
+        document.body.removeChild(tempTextArea);
     }
 }
 
@@ -947,6 +1065,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearAllBtn = document.getElementById('clearAllBtn');
     const copyBtn = document.getElementById('copyBtn');
     const copyHtmlBtn = document.getElementById('copyHtmlBtn');
+    const copySummernoteBtn = document.getElementById('copySummernoteBtn');
 
     // Event listeners para extracción automática
     document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
@@ -973,6 +1092,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Botón de copia HTML
     if (copyHtmlBtn) {
         copyHtmlBtn.addEventListener('click', copiarResultadoHTML);
+    }
+    
+    // Botón de copia para Summernote
+    if (copySummernoteBtn) {
+        copySummernoteBtn.addEventListener('click', copiarParaSummernote);
     }
     
     // Botones del texto
