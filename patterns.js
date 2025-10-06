@@ -4,53 +4,53 @@
 const EXTRACTION_PATTERNS = {
     // ============== HEMOGRAMA ==============
     hemograma: {
-        // Hemoglobina: busca "Hemoglobina" seguido de números y "g/dL"
-        hemoglobina: /Hemoglobina\s*\*?\s*(\d+\.?\d*)\s*g\/dL/i,
+        // Hemoglobina: busca "HEMOGLOBINA" seguido de números y "g/dL"
+        hemoglobina: /HEMOGLOBINA\s*[hi]*\s*(\d+\.?\d*)\s*g\/dL/i,
         
-        // Hematocrito: busca "Hematocrito" seguido de números y "%"
-        hematocrito: /Hematocrito\s*\*?\s*(\d+\.?\d*)\s*%/i,
+        // Hematocrito: busca "HEMATOCRITO" seguido de números y "%"
+        hematocrito: /HEMATOCRITO\s*[hi]*\s*(\d+\.?\d*)\s*%/i,
         
-        // Leucocitos: busca "Leucocitos" seguido de números y "10e3/uL"
-        leucocitos: /(?:Recuento de )?Leucocitos\s*\*?\s*(\d+\.?\d*)\s*10e3\/uL/i,
+        // Leucocitos: busca "RECUENTO DE LEUCOCITOS" seguido de números y "10^3/uL"
+        leucocitos: /RECUENTO DE LEUCOCITOS\s*[hi]*\s*(\d+\.?\d*)\s*10\^3\/uL/i,
         
-        // Neutrófilos porcentaje: busca "Neutrófilos %" seguido de números
-        neutrofilos_porcentaje: /Neutrófilos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i,
+        // Neutrófilos porcentaje: busca "NEUTROFILOS %" seguido de números
+        neutrofilos_porcentaje: /NEUTROFILOS\s*%\s*[hi]*\s*(\d+\.?\d*)\s*%/i,
         
-        // Linfocitos porcentaje: busca "Linfocitos %" seguido de números
-        linfocitos_porcentaje: /Linfocitos\s*%\s*\*?\s*(\d+\.?\d*)\s*%/i,
+        // Linfocitos porcentaje: busca "LINFOCITOS %" seguido de números
+        linfocitos_porcentaje: /LINFOCITOS\s*%\s*[hi]*\s*(\d+\.?\d*)\s*%/i,
         
-        // Plaquetas: busca "Plaquetas" seguido de números y "10e3/uL"
-        plaquetas: /(?:Recuento de )?Plaquetas\s*\*?\s*(\d+)\s*10e3\/uL/i
+        // Plaquetas: busca "RECUENTO DE PLAQUETAS" seguido de números y "10^3/uL"
+        plaquetas: /RECUENTO DE PLAQUETAS\s*[hi]*\s*(\d+)\s*10\^3\/uL/i
     },
 
     // ============== FUNCIÓN RENAL ==============
     renal: {
-        // Creatinina: busca "Creatinina" seguido de números y "mg/dL"
-        creatinina: /Creatinina\s*\*?\s*(\d+\.?\d*)\s*mg\/dL/i,
+        // Creatinina: busca "CREATININA" seguido de números y "mg/dL"
+        creatinina: /CREATININA\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
         
-        // BUN (Nitrógeno Ureico): busca "Nitrógeno Ureico" seguido de números
-        bun: /Nitrógeno Ureico\s*\*?\s*(\d+\.?\d*)\s*mg/i,
+        // BUN (Nitrógeno Ureico): busca "NITROGENO UREICO (BUN)" seguido de números
+        bun: /NITROGENO UREICO \(BUN\)\s*[hi]*\s*(\d+\.?\d*)\s*mg%/i,
         
-        // Urea: busca "Urea" seguido de números y "mg/dL"
-        urea: /Urea\s*\*?\s*(\d+\.?\d*)\s*mg\/dL/i,
+        // Urea: busca "UREA" seguido de números y "mg/dL"
+        urea: /UREA\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
         
-        // Sodio: busca "Sodio" seguido de números y "mEq/L"
-        sodio: /Sodio\s*\*?\s*(\d+\.?\d*)\s*mEq\/L/i,
+        // Sodio: busca "ELECTROLITO SODIO" seguido de números y "mEq/L"
+        sodio: /ELECTROLITO SODIO\s*[hi]*\s*(\d+\.?\d*)\s*mEq\/L/i,
         
-        // Potasio: busca "Potasio" seguido de números y "mEq/L"
-        potasio: /Potasio\s*\*?\s*(\d+\.?\d*)\s*mEq\/L/i,
+        // Potasio: busca "ELECTROLITO POTASIO" seguido de números y "mEq/L"
+        potasio: /ELECTROLITO POTASIO\s*[hi]*\s*(\d+\.?\d*)\s*mEq\/L/i,
         
-        // Cloro: busca "Cloro" seguido de números y "mEq/L"
-        cloro: /Cloro\s*\*?\s*(\d+\.?\d*)\s*mEq\/L/i,
+        // Cloro: busca "ELECTROLITO CLORO" seguido de números y "mEq/L"
+        cloro: /ELECTROLITO CLORO\s*[hi]*\s*(\d+\.?\d*)\s*mEq\/L/i,
         
-        // Fósforo: busca "Fósforo" seguido de números y "mg/dL"
-        fosforo: /Fósforo\s*\*?\s*(\d+\.?\d*)\s*mg\/dL/i,
+        // Fósforo: busca "FOSFORO SERICO" seguido de números y "mg/dL"
+        fosforo: /FOSFORO SERICO\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
         
-        // Calcio: busca "Calcio" seguido de números y "mg/dL"
-        calcio: /Calcio\s*\*?\s*(\d+\.?\d*)\s*mg\/dL/i,
+        // Calcio: busca "CALCIO" seguido de números y "mg/dL"
+        calcio: /CALCIO\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
         
-        // Magnesio: busca "Magnesio" seguido de números y "mg/dL"
-        magnesio: /Magnesio\s*\*?\s*(\d+\.?\d*)\s*mg\/dL/i
+        // Magnesio: busca "MAGNESIO" seguido de números y "mg/dL"
+        magnesio: /MAGNESIO\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i
     },
 
     // ============== FUNCIÓN HEPÁTICA ==============
@@ -135,8 +135,8 @@ const EXTRACTION_PATTERNS = {
 
     // ============== GASES EN SANGRE ==============
     gases: {
-        // pH: busca "pH"
-        ph: /pH[\s\S]*?(\d+\.?\d*)/i,
+        // pH: busca "pH" específicamente (no parte de otra palabra)
+        ph: /\bpH\s*[hi]*\s*(\d+\.?\d*)/i,
         
         // PCO2: busca "PCO2"
         pco2: /PCO2[\s\S]*?(\d+\.?\d*)\s+mmHg/i,

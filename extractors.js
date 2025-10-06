@@ -64,10 +64,11 @@ class SimpleExtractor {
     extraerRenal() {
         let resultados = [];
 
-        // 1. CREATININA (sin redondear)
+        // 1. CREATININA (redondeada a 1 decimal)
         const creatinina = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.creatinina);
         if (creatinina) {
-            resultados.push(`Crea: ${creatinina}`);
+            const creaFormateada = parseFloat(creatinina).toFixed(1);
+            resultados.push(`Crea: ${creaFormateada}`);
         }
 
         // 2. BUN (Nitrógeno Ureico)
