@@ -759,7 +759,7 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     }, 3000);
 }
 
-// Función para copiar resultados
+// Función para copiar resultados como texto plano
 function copiarResultado() {
     const resultsDiv = document.getElementById('results');
     
@@ -783,6 +783,42 @@ function copiarResultado() {
         document.body.removeChild(textArea);
         mostrarNotificacion('Resultado copiado al portapapeles', 'success');
     });
+}
+
+// Función para copiar resultados como HTML (compatible con editores web como Summernote)
+function copiarResultadoHTML() {
+    const resultsDiv = document.getElementById('results');
+    
+    // Usar el texto original y convertirlo a HTML
+    const resultText = resultsDiv.getAttribute('data-original-text') || resultsDiv.textContent;
+    
+    if (!resultText) {
+        mostrarNotificacion('No hay resultados para copiar', 'error');
+        return;
+    }
+    
+    // Convertir saltos de línea especiales a <br> para HTML
+    const htmlResult = resultText
+        .replace(/\n/g, '<br>')           // Saltos de línea normales
+        .replace(/\u2028/g, '<br>');      // Line Separator (soft line break)
+    
+    // Copiar tanto texto plano como HTML al portapapeles
+    if (navigator.clipboard && navigator.clipboard.write) {
+        const clipboardItem = new ClipboardItem({
+            'text/html': new Blob([htmlResult], { type: 'text/html' }),
+            'text/plain': new Blob([resultText], { type: 'text/plain' })
+        });
+        
+        navigator.clipboard.write([clipboardItem]).then(() => {
+            mostrarNotificacion('Resultado HTML copiado al portapapeles', 'success');
+        }).catch(() => {
+            // Fallback: copiar solo como texto
+            copiarResultado();
+        });
+    } else {
+        // Fallback para navegadores que no soportan ClipboardItem
+        copiarResultado();
+    }
 }
 
 // Función para seleccionar todo
@@ -910,6 +946,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectAllBtn = document.getElementById('selectAllBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const copyHtmlBtn = document.getElementById('copyHtmlBtn');
 
     // Event listeners para extracción automática
     document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
@@ -932,6 +969,11 @@ document.addEventListener('DOMContentLoaded', function() {
     selectAllBtn.addEventListener('click', seleccionarTodo);
     clearAllBtn.addEventListener('click', limpiarSeleccion);
     copyBtn.addEventListener('click', copiarResultado);
+    
+    // Botón de copia HTML
+    if (copyHtmlBtn) {
+        copyHtmlBtn.addEventListener('click', copiarResultadoHTML);
+    }
     
     // Botones del texto
     const pasteTextBtn = document.getElementById('pasteTextBtn');
