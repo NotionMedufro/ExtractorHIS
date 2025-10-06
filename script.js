@@ -735,6 +735,10 @@ function mostrarResultados(resultado) {
     
     const htmlResult = resultado.replace(/\n/g, '<br>');
     resultsDiv.innerHTML = htmlResult;
+    
+    // Guardar el texto original con saltos de línea para la función de copia
+    resultsDiv.setAttribute('data-original-text', resultado);
+    
     resultsDiv.style.display = 'block';
     resultsStatus.style.display = 'none';
     copyArea.style.display = 'flex';
@@ -754,7 +758,9 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 // Función para copiar resultados
 function copiarResultado() {
     const resultsDiv = document.getElementById('results');
-    const resultText = resultsDiv.textContent;
+    
+    // Usar el texto original con saltos de línea preservados
+    const resultText = resultsDiv.getAttribute('data-original-text') || resultsDiv.textContent;
     
     if (!resultText) {
         mostrarNotificacion('No hay resultados para copiar', 'error');
