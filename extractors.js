@@ -37,24 +37,25 @@ class SimpleExtractor {
             resultados.push(`Hb: ${hbFormateado}`);
         }
 
-        // 2. LEUCOCITOS (Glóbulos Blancos)
+        // 2. NEUTRÓFILOS % (se usará con GB)
+        const neutrofilos = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.neutrofilos_porcentaje);
+        let neutrofiloPart = '';
+        if (neutrofilos) {
+            const neutRedondeado = Math.round(parseFloat(neutrofilos));
+            neutrofiloPart = ` (N: ${neutRedondeado}%)`;
+        }
+
+        // 3. LEUCOCITOS (Glóbulos Blancos) + NEUTRÓFILOS
         const gb = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.leucocitos);
         if (gb) {
             const gbFormateado = parseFloat(gb).toFixed(3);
-            resultados.push(`GB: ${gbFormateado}`);
-        }
-
-        // 3. NEUTRÓFILOS %
-        const neutrofilos = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.neutrofilos_porcentaje);
-        if (neutrofilos) {
-            const neutRedondeado = Math.round(parseFloat(neutrofilos));
-            resultados.push(`(N: ${neutRedondeado}%)`);
+            resultados.push(`GB: ${gbFormateado}${neutrofiloPart}`);
         }
 
         // 4. PLAQUETAS
         const plaquetas = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.plaquetas);
         if (plaquetas) {
-            resultados.push(`Plq: ${plaquetas}.000`);
+            resultados.push(`Plaq: ${plaquetas}.000`);
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
@@ -376,34 +377,52 @@ class SimpleExtractor {
     formatearResultadoEstructurado(fecha, secciones) {
         let resultado = fecha ? fecha + '\n' : '';
         
-        // Unir todas las secciones con comas y espacios
-        const todasLasSecciones = secciones.join(', ');
-        
-        // Separar en líneas más legibles
-        // Primera línea: Hemograma + PCR
-        // Segunda línea: Renal + extras
-        // Tercera línea: Hepático
-        // Cuarta línea: Coagulación
+        // Organizar secciones en líneas según el formato esperado:
+        // Línea 1: Hemograma + PCR
+        // Línea 2: Renal (excluyendo BUN y Urea) + Calcio
+        // Línea 3: Hepático + Nutricional (Alb)
+        // Línea 4: Coagulación
         
         const lineas = [];
-        let lineaActual = '';
-        const maxPorLinea = 80; // Aproximadamente 80 caracteres por línea
         
-        const partes = todasLasSecciones.split(', ');
+        // Recolectar todas las partes de todas las secciones
+        const todasLasPartes = [];
+        for (const seccion of secciones) {
+            const partes = seccion.split(', ');
+            todasLasPartes.push(...partes);
+        }
         
-        for (const parte of partes) {
-            if (lineaActual === '') {
-                lineaActual = parte;
-            } else if ((lineaActual + ', ' + parte).length <= maxPorLinea) {
-                lineaActual += ', ' + parte;
-            } else {
-                lineas.push(lineaActual + ', ');
-                lineaActual = parte;
+        // Organizar en líneas según tipo de parámetro
+        const linea1 = []; // Hemograma + PCR
+        const linea2 = []; // Renal sin BUN/Urea + Calcio
+        const linea3 = []; // Hepático + Alb
+        const linea4 = []; // Coagulación
+        
+        for (const parte of todasLasPartes) {
+            if (parte.startsWith('Hb:') || parte.startsWith('GB:') || parte.startsWith('Plaq:') || parte.startsWith('PCR:')) {
+                linea1.push(parte);
+            } else if (parte.startsWith('Crea:') || parte.startsWith('ELP:') || parte.startsWith('Ca:')) {
+                linea2.push(parte);
+            } else if (parte.startsWith('BiliT/D:') || parte.startsWith('GOT/GPT:') || parte.startsWith('FA:') || 
+                      parte.startsWith('GGT:') || parte.startsWith('Amil:') || parte.startsWith('Lip:') || parte.startsWith('Alb:')) {
+                linea3.push(parte);
+            } else if (parte.startsWith('INR:') || parte.startsWith('TP:') || parte.startsWith('TTPa:')) {
+                linea4.push(parte);
             }
         }
         
-        if (lineaActual) {
-            lineas.push(lineaActual);
+        // Construir líneas
+        if (linea1.length > 0) {
+            lineas.push(linea1.join(', ') + ', ');
+        }
+        if (linea2.length > 0) {
+            lineas.push(linea2.join(', ') + ',');
+        }
+        if (linea3.length > 0) {
+            lineas.push(linea3.join(', '));
+        }
+        if (linea4.length > 0) {
+            lineas.push(linea4.join(', '));
         }
         
         resultado += lineas.join('\n');
