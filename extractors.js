@@ -27,7 +27,7 @@ class SimpleExtractor {
     }
 
     // ============== EXTRACTOR DE HEMOGRAMA ==============
-    extraerHemograma() {
+    extraerHemograma(opcionesSeleccionadas = []) {
         let resultados = [];
 
         // 1. HEMOGLOBINA
@@ -58,31 +58,116 @@ class SimpleExtractor {
             resultados.push(`Plaq: ${plaquetas}.000`);
         }
 
+        // === PARÁMETROS ADICIONALES DEL SUBMENÚ ===
+        
+        // HEMATOCRITO (Hcto)
+        if (opcionesSeleccionadas.includes('Hcto')) {
+            const hcto = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.hematocrito);
+            if (hcto) {
+                const hctoFormateado = Math.round(parseFloat(hcto));
+                resultados.push(`Hcto: ${hctoFormateado}%`);
+            }
+        }
+        
+        // VCM
+        if (opcionesSeleccionadas.includes('VCM')) {
+            const vcm = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.vcm);
+            if (vcm) {
+                const vcmFormateado = Math.round(parseFloat(vcm));
+                resultados.push(`VCM: ${vcmFormateado}`);
+            }
+        }
+        
+        // CHCM
+        if (opcionesSeleccionadas.includes('CHCM')) {
+            const chcm = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.chcm);
+            if (chcm) {
+                const chcmFormateado = Math.round(parseFloat(chcm));
+                resultados.push(`CHCM: ${chcmFormateado}`);
+            }
+        }
+        
+        // RDW
+        if (opcionesSeleccionadas.includes('RDW')) {
+            const rdw = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.rdw);
+            if (rdw) {
+                const rdwFormateado = Math.round(parseFloat(rdw));
+                resultados.push(`RDW: ${rdwFormateado}`);
+            }
+        }
+        
+        // RETICULOCITOS
+        if (opcionesSeleccionadas.includes('Reticulocitos')) {
+            const retic = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.reticulocitos);
+            if (retic) {
+                resultados.push(`Ret: ${retic}%`);
+            }
+        }
+        
+        // LINFOCITOS %
+        if (opcionesSeleccionadas.includes('Linfocitos')) {
+            const linf = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.linfocitos_porcentaje);
+            if (linf) {
+                const linfFormateado = Math.round(parseFloat(linf));
+                resultados.push(`L: ${linfFormateado}%`);
+            }
+        }
+        
+        // RAN (Recuento Absoluto de Neutrófilos)
+        if (opcionesSeleccionadas.includes('RAN')) {
+            const ran = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.neutrofilos_absoluto);
+            if (ran) {
+                const ranFormateado = parseFloat(ran).toFixed(3);
+                resultados.push(`RAN: ${ranFormateado}`);
+            }
+        }
+        
+        // RAL (Recuento Absoluto de Linfocitos)
+        if (opcionesSeleccionadas.includes('RAL')) {
+            const ral = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.linfocitos_absoluto);
+            if (ral) {
+                const ralFormateado = parseFloat(ral).toFixed(3);
+                resultados.push(`RAL: ${ralFormateado}`);
+            }
+        }
+
         return this.limpiarAsteriscos(resultados.join(', '));
     }
 
     // ============== EXTRACTOR DE FUNCIÓN RENAL ==============
-    extraerRenal() {
+    extraerRenal(opcionesSeleccionadas = []) {
         let resultados = [];
 
-        // 1. CREATININA (redondeada a 1 decimal)
+        // 1. CREATININA (redondeada a 1 decimal) con VFG opcional
         const creatinina = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.creatinina);
         if (creatinina) {
-            const creaFormateada = parseFloat(creatinina).toFixed(1);
+            let creaFormateada = parseFloat(creatinina).toFixed(1);
+            
+            // VFG (Velocidad de Filtración Glomerular)
+            if (opcionesSeleccionadas.includes('VFG')) {
+                const vfg = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.vfg);
+                if (vfg) {
+                    const vfgFormateado = Math.round(parseFloat(vfg));
+                    creaFormateada += ` (VFG: ${vfgFormateado})`;
+                }
+            }
+            
             resultados.push(`Crea: ${creaFormateada}`);
         }
 
-        // 2. BUN (Nitrógeno Ureico)
+        // 2. BUN (Nitrógeno Ureico) - siempre incluido
         const bun = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.bun);
         if (bun) {
             resultados.push(`BUN: ${bun}`);
         }
 
-        // 3. UREA (redondear a entero)
-        const urea = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.urea);
-        if (urea) {
-            const ureaRedondeada = Math.round(parseFloat(urea));
-            resultados.push(`Urea: ${ureaRedondeada}`);
+        // 3. UREA (solo si está seleccionada en el submenú)
+        if (opcionesSeleccionadas.includes('Urea')) {
+            const urea = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.urea);
+            if (urea) {
+                const ureaRedondeada = Math.round(parseFloat(urea));
+                resultados.push(`Urea: ${ureaRedondeada}`);
+            }
         }
 
         // 4. ELECTROLITOS (Na/K/Cl)
@@ -110,10 +195,23 @@ class SimpleExtractor {
             resultados.push(`Ca: ${caFormateado}`);
         }
 
-        // 7. MAGNESIO (sin redondear)
-        const magnesio = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.magnesio);
-        if (magnesio) {
-            resultados.push(`Mg: ${magnesio}`);
+        // === PARÁMETROS ADICIONALES DEL SUBMENÚ ===
+        
+        // 7. MAGNESIO (solo si está seleccionado)
+        if (opcionesSeleccionadas.includes('Magnesio')) {
+            const magnesio = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.magnesio);
+            if (magnesio) {
+                resultados.push(`Mg: ${magnesio}`);
+            }
+        }
+        
+        // 8. ÁCIDO ÚRICO (solo si está seleccionado)
+        if (opcionesSeleccionadas.includes('AcidoUrico') || opcionesSeleccionadas.includes('Ácido Úrico') || opcionesSeleccionadas.includes('Acido Úrico')) {
+            const acidoUrico = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.acido_urico);
+            if (acidoUrico) {
+                const auFormateado = parseFloat(acidoUrico).toFixed(1);
+                resultados.push(`Á.Ur: ${auFormateado}`);
+            }
         }
         
         // 8. AMILASA (redondear a entero)
@@ -329,7 +427,7 @@ class SimpleExtractor {
         let secciones = [];
         
         if (opcionesSeleccionadas.includes('Hemograma')) {
-            const hemograma = this.extraerHemograma();
+            const hemograma = this.extraerHemograma(opcionesSeleccionadas);
             if (hemograma) secciones.push(hemograma);
         }
 
@@ -339,7 +437,7 @@ class SimpleExtractor {
         }
 
         if (opcionesSeleccionadas.includes('Renal')) {
-            const renal = this.extraerRenal();
+            const renal = this.extraerRenal(opcionesSeleccionadas);
             if (renal) secciones.push(renal);
         }
 
@@ -402,9 +500,14 @@ class SimpleExtractor {
         const linea4 = []; // Coagulación
         
         for (const parte of todasLasPartes) {
-            if (parte.startsWith('Hb:') || parte.startsWith('GB:') || parte.startsWith('Plaq:') || parte.startsWith('PCR:')) {
+            if (parte.startsWith('Hb:') || parte.startsWith('GB:') || parte.startsWith('Plaq:') || parte.startsWith('PCR:') ||
+                parte.startsWith('Hcto:') || parte.startsWith('VCM:') || parte.startsWith('CHCM:') || 
+                parte.startsWith('RDW:') || parte.startsWith('Ret:') || parte.startsWith('L:') ||
+                parte.startsWith('RAN:') || parte.startsWith('RAL:')) {
                 linea1.push(parte);
-            } else if (parte.startsWith('Crea:') || parte.startsWith('ELP:') || parte.startsWith('Ca:')) {
+            } else if (parte.startsWith('Crea:') || parte.startsWith('ELP:') || parte.startsWith('Ca:') ||
+                      parte.startsWith('BUN:') || parte.startsWith('Urea:') || parte.startsWith('Mg:') ||
+                      parte.startsWith('Á.Ur:') || parte.startsWith('P:')) {
                 linea2.push(parte);
             } else if (parte.startsWith('BiliT/D:') || parte.startsWith('GOT/GPT:') || parte.startsWith('FA:') || 
                       parte.startsWith('GGT:') || parte.startsWith('Amil:') || parte.startsWith('Lip:') || parte.startsWith('Alb:')) {
