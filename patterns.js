@@ -20,13 +20,34 @@ const EXTRACTION_PATTERNS = {
         linfocitos_porcentaje: /LINFOCITOS\s*%\s*[hi]*\s*(\d+\.?\d*)\s*%/i,
 
         // Plaquetas: busca "RECUENTO DE PLAQUETAS" seguido de números y "10^3/uL"
-        plaquetas: /RECUENTO DE PLAQUETAS\s*[hi]*\s*(\d+)\s*10\^3\/uL/i
+        plaquetas: /RECUENTO DE PLAQUETAS\s*[hi]*\s*(\d+)\s*10\^3\/uL/i,
+
+        // VCM: Volumen Corpuscular Medio
+        vcm: /VCM-?\s*VOLUMEN\s+CORPUSCULAR\s+MEDIO\s\D*(\d+\.?\d*)\s*fL/i,
+
+        // CHCM: Concentración de Hb Corpuscular Media
+        chcm: /CHCM\s*-\s*CONC\.\s*Hb\s*CORPUSCULAR\s*MEDIA\s\D*(\d+\.?\d*)\s*g\/dL/i,
+
+        // RDW: Red Cell Distribution Width
+        rdw: /RDW\s*[i]?\s\D*(\d+\.?\d*)\s*%/i,
+
+        // Reticulocitos
+        reticulocitos: /RETICULOCITOS\s\D*(\d+\.?\d*)\s*%/i,
+
+        // Neutrófilos Absoluto (RAN)
+        neutrofilos_absoluto: /NEUTROFILOS\s\D*(\d+\.?\d*)\s*10\^3\/uL/i,
+
+        // Linfocitos Absoluto (RAL)
+        linfocitos_absoluto: /LINFOCITOS\s\D*(\d+\.?\d*)\s*10\^3\/uL/i
     },
 
     // ============== FUNCIÓN RENAL ==============
     renal: {
         // Creatinina: busca "CREATININA" seguido de números y "mg/dL"
         creatinina: /CREATININA\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
+
+        // VFG: Velocidad de Filtración Glomerular
+        vfg: /VFG\s\D*(\d+\.?\d*)\s*mL\/min/i,
 
         // BUN (Nitrógeno Ureico): busca "NITROGENO UREICO (BUN)" seguido de números
         bun: /NITROGENO UREICO \(BUN\)\s*[hi]*\s*(\d+\.?\d*)\s*mg%/i,
@@ -50,7 +71,10 @@ const EXTRACTION_PATTERNS = {
         calcio: /CALCIO\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
 
         // Magnesio: busca "MAGNESIO" seguido de números y "mg/dL"
-        magnesio: /MAGNESIO\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i
+        magnesio: /MAGNESIO\s*[hi]*\s*(\d+\.?\d*)\s*mg\/dL/i,
+
+        // Ácido Úrico
+        acido_urico: /ACIDO\s+URICO\s\D*(\d+\.?\d*)\s*mg\/dL/i
     },
 
     // ============== FUNCIÓN HEPÁTICA ==============

@@ -1973,29 +1973,23 @@ function initSuggestionModal() {
     const modal = document.getElementById('suggestionModal');
     const openBtn = document.getElementById('suggestionBtn');
     const closeBtn = document.getElementById('closeModalBtn');
-    const cancelBtn = document.getElementById('cancelSuggestionBtn');
-    const sendBtn = document.getElementById('sendSuggestionBtn');
-    const titleInput = document.getElementById('suggestionTitle');
-    const messageInput = document.getElementById('suggestionMessage');
+    const closeBtnFooter = document.getElementById('closeModalBtnFooter');
+    const copyEmailBtn = document.getElementById('copyEmailBtn');
 
     if (!modal || !openBtn) return;
 
     // Abrir modal
     openBtn.addEventListener('click', () => {
         modal.classList.add('active');
-        titleInput.focus();
     });
 
     // Cerrar modal
     const closeModal = () => {
         modal.classList.remove('active');
-        // Opcional: limpiar campos al cerrar
-        // titleInput.value = '';
-        // messageInput.value = '';
     };
 
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (closeBtnFooter) closeBtnFooter.addEventListener('click', closeModal);
 
     // Cerrar al hacer clic fuera
     modal.addEventListener('click', (e) => {
@@ -2011,27 +2005,25 @@ function initSuggestionModal() {
         }
     });
 
-    // Enviar sugerencia
-    sendBtn.addEventListener('click', () => {
-        const title = titleInput.value.trim();
-        const message = messageInput.value.trim();
+    // Copiar correo
+    if (copyEmailBtn) {
+        copyEmailBtn.addEventListener('click', () => {
+            const email = 'notion.medufro@gmail.com';
+            navigator.clipboard.writeText(email).then(() => {
+                mostrarNotificacion('Correo copiado al portapapeles', 'success');
 
-        if (!title || !message) {
-            mostrarNotificacion('Por favor completa ambos campos', 'error');
-            return;
-        }
-
-        const subject = `Sugerencia Extractor: ${title}`;
-        const body = message;
-
-        // Construir mailto
-        const mailtoLink = `mailto:notion.medufro@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-        window.location.href = mailtoLink;
-
-        mostrarNotificacion('Abriendo cliente de correo...', 'success');
-        closeModal();
-    });
+                // Feedback visual en el botón
+                const originalIcon = copyEmailBtn.innerHTML;
+                copyEmailBtn.innerHTML = '<span class="btn-icon">✅</span>';
+                setTimeout(() => {
+                    copyEmailBtn.innerHTML = originalIcon;
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                mostrarNotificacion('Error al copiar correo', 'error');
+            });
+        });
+    }
 }
 
 // Inicializar sistema de sugerencias cuando el DOM esté listo

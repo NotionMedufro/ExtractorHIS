@@ -560,20 +560,28 @@
                 <button id="closeModalBtn" class="close-modal-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="suggestionTitle">Título de la sugerencia</label>
-                    <input type="text" id="suggestionTitle" placeholder="Ej: Agregar nuevo parámetro..."
-                        autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label for="suggestionMessage">Detalle</label>
-                    <textarea id="suggestionMessage"
-                        placeholder="Describe tu sugerencia o el problema que encontraste..." rows="5"></textarea>
+                <div class="contact-info-container" style="text-align: center; padding: 20px 0;">
+                    <p style="margin-bottom: 20px; line-height: 1.6;">
+                        Por ahora no se pueden enviar sugerencias de manera directa, pero si así lo deseas puedes
+                        escribir al siguiente correo:
+                    </p>
+
+                    <div class="email-box"
+                        style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 25px; background: var(--bg-secondary); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <code style="font-size: 1.1em; color: var(--text-primary);">notion.medufro@gmail.com</code>
+                        <button id="copyEmailBtn" class="utility-button-inline" title="Copiar correo">
+                            <span class="btn-icon">📋</span>
+                        </button>
+                    </div>
+
+                    <p style="margin-bottom: 10px; line-height: 1.6;">
+                        O escribir al número <strong>(+56) 9 6141 3151</strong> con un mensaje que incluya tu nombre y
+                        sugerencia para el extractor.
+                    </p>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button id="cancelSuggestionBtn" class="utility-button">Cancelar</button>
-                <button id="sendSuggestionBtn" class="primary-button">Enviar Sugerencia</button>
+            <div class="modal-footer" style="justify-content: center;">
+                <button id="closeModalBtnFooter" class="primary-button">Entendido</button>
             </div>
         </div>
     </div>
