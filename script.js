@@ -19,11 +19,11 @@ const PATRONES_EXTRACCION = {
     linfocitos_pct: /LINFOCITOS\s*%\s\D*(\d+\.?\d*)\s*%/i,
     neutrofilos_abs: /NEUTROFILOS\s\D*(\d+\.?\d*)\s*10\^3\/uL/i,
     linfocitos_abs: /LINFOCITOS\s\D*(\d+\.?\d*)\s*10\^3\/uL/i,
-    
+
     // PCR y marcadores - patrones para tu formato específico
     pcr: /PROTEINA\s+C\s+REACTIVA\s*\(CRP\)\s\D*(\d+\.?\d*)\s*mg\/L/i,
     procalcitonina: /PROCALCITONINA\s\D*(\d+\.?\d*)\s*ng\/mL/i,
-    
+
     // Función renal - patrones para tu formato específico
     creatinina: /CREATININA\s\D*(\d+\.?\d*)\s*mg\/dL/i,
     bun: /NITROGENO\s+UREICO\s\D*\(BUN\)\s*(\d+\.?\d*)\s*mg%/i,
@@ -52,34 +52,34 @@ const PATRONES_EXTRACCION = {
     tp_seg: /TIEMPO\s+DE\s+PROTROMBINA[\s\w]*?(\d+\.?\d*)\s*Segundos/i,
     tp_pct: /%\s*TP\s*[i]?\s\D*(\d+\.?\d*)\s*%/i,
     ttpa_seg: /TIEMPO\s+DE\s+TROMBOPLASTINA\s+PARCIAL[\s\S]*?(?:ACTIVADO[\s\S]*?)?(\d+\.?\d*)\s*Segundos/i,
-    
+
     // Fecha - busca a partir de "Recepcion muestra"
     fecha: /Recepcion\s+muestra\s*:\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i,
-    
+
     // Otros patrones comentados para referencia futura
     // hematocrito: /HEMATOCRITO\s*(\*?)\s*(\d+\.?\d*)\s*%\s*\d+\s*-\s*\d+/i,
     // linfocitos: /LINFOCITOS\s*%\s*(\*?)\s*(\d+\.?\d*)\s*%/i,
-    
+
     // Función renal
     // creatinina: /Creatinina\s*(\*?)\s*(\d+\.?\d*)\s+mg\/dL/i,
     // bun: /Nitrógeno\s+Ureico\s*(\*?)\s*(\d+\.?\d*)\s+mg/i,
     // urea: /Urea\s*(\*?)\s*(\d+\.?\d*)\s+mg\/dL/i,
-    
+
     // Electrolitos
     // sodio: /Sodio\s*(\*?)\s*(\d+\.?\d*)\s+mEq\/L/i,
     // potasio: /Potasio\s*(\*?)\s*(\d+\.?\d*)\s+mEq\/L/i,
     // cloro: /Cloro\s*(\*?)\s*(\d+\.?\d*)\s+mEq\/L/i,
-    
+
     // Función hepática
     // bilirrubina_total: /Bilirrubina\s+Total\s*(\*?)\s*(\d+\.?\d*)\s+mg\/dL/i,
     // got: /GOT\s*(\*?)\s*(\d+\.?\d*)\s+U\/L/i,
     // gpt: /GPT\s*(\*?)\s*(\d+\.?\d*)\s+U\/L/i,
     // fosfatasa: /Fosfatasa\s+Alcalina\s*(\*?)\s*(\d+\.?\d*)\s+U\/L/i,
-    
+
     // Nutricional
     // proteinas: /Proteínas\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i,
     // albumina: /Albúmina\s*(\*?)\s*(\d+\.?\d*)\s+g\/dL/i,
-    
+
     // Coagulación
     // inr: /INR\s*(\*?)\s*(\d+\.?\d*)/i,
     // pt: /Tiempo\s+de\s+Protrombina\s*(\*?)\s*(\d+\.?\d*)\s+seg/i,
@@ -91,26 +91,26 @@ class ExtractorMedico {
         this.texto = '';
         this.opcionesSeleccionadas = [];
     }
-    
+
     // Función principal de extracción
     extraer(texto, opciones) {
         this.texto = texto;
         this.opcionesSeleccionadas = opciones;
-        
+
         let resultado = [];
-        
+
         // Extraer fecha si está seleccionada
         if (opciones.includes('Fecha')) {
             const fecha = this.extraerFecha();
             if (fecha) resultado.push(fecha);
         }
-        
+
         // Hemograma
         if (opciones.includes('Hemograma')) {
             const hemograma = this.extraerHemograma();
             if (hemograma) resultado.push(hemograma);
         }
-        
+
         // PCR
         if (opciones.includes('PCR')) {
             const pcr = this.extraerPCR();
@@ -122,7 +122,7 @@ class ExtractorMedico {
             const renal = this.extraerRenal();
             if (renal) resultado.push(renal);
         }
-        
+
         // Hepático
         if (opciones.includes('Hepatico') || opciones.includes('Hepático')) {
             const hepatico = this.extraerHepatico();
@@ -134,36 +134,36 @@ class ExtractorMedico {
             const coagu = this.extraerCoagulacion();
             if (coagu) resultado.push(coagu);
         }
-        
+
         // Si no hay opciones seleccionadas, no extraer nada
         if (opciones.length === 0) {
             return '';
         }
-        
+
         // Si no se encontró nada, devolver mensaje
         if (resultado.length === 0) {
             return 'No se encontraron datos con las opciones seleccionadas';
         }
-        
+
         return resultado.join('\n');
     }
-    
+
     // Función auxiliar para extraer valores con regex
     extraerValor(pattern, formateo = null) {
         const match = this.texto.match(pattern);
         if (!match) return null;
-        
+
         // El primer grupo (match[0]) es la coincidencia completa
         // El segundo grupo (match[1]) es el primer grupo de captura
         const valor = match[1];
-        
+
         if (formateo) {
             return formateo(valor);
         }
-        
+
         return valor;
     }
-    
+
     // Extracción de fecha - busca a partir de "Recepcion muestra"
     extraerFecha() {
         const match = this.texto.match(PATRONES_EXTRACCION.fecha);
@@ -183,13 +183,13 @@ class ExtractorMedico {
         }
         return null;
     }
-    
+
     // Extracción SOLO de hematocrito
     extraerHematocrito() {
         const hcto = this.extraerValor(PATRONES_EXTRACCION.hematocrito, (valor, asterisco) => {
             return `Hcto: ${asterisco}${parseFloat(valor).toFixed(1)}%`;
         });
-        
+
         return hcto;
     }
 
@@ -265,7 +265,7 @@ class ExtractorMedico {
 
         return partes.length > 0 ? partes.join(', ') : null;
     }
-    
+
     // Extracción de PCR y Procalcitonina - formato específico
     extraerPCR() {
         const valores = [];
@@ -275,13 +275,13 @@ class ExtractorMedico {
             return `PCR: ${Math.round(parseFloat(valor))}`;
         });
         if (pcr) valores.push(pcr);
-        
+
         // Procalcitonina - formato: Proca: 0.02
         const proca = this.extraerValor(PATRONES_EXTRACCION.procalcitonina, (valor) => {
             return `Proca: ${parseFloat(valor).toFixed(2)}`;
         });
         if (proca) valores.push(proca);
-        
+
         return valores.length > 0 ? valores.join(', ') : null;
     }
 
@@ -367,7 +367,7 @@ class ExtractorMedico {
 
         return valores.length > 0 ? valores.join(', ') : null;
     }
-    
+
     // Extracción de función renal - formato específico
     extraerRenal() {
         const valores = [];
@@ -461,11 +461,11 @@ let currentExams = new Map(); // ID del examen -> texto del examen
 function agregarNuevoExamen() {
     examCounter++;
     const examId = examCounter;
-    
+
     const examItem = document.createElement('div');
     examItem.className = 'exam-item';
     examItem.setAttribute('data-exam-id', examId);
-    
+
     examItem.innerHTML = `
         <div class="exam-header">
             <span class="exam-title">Examen #${examId}</span>
@@ -496,23 +496,23 @@ function agregarNuevoExamen() {
                     placeholder="1. En la página pdf del examen presiona: Ctrl + A para seleccionar todo el texto&#10;2. Copia el texto mediante: Ctrl + C&#10;3. Pega el texto aquí mediante: Ctrl + V"></textarea>
         </div>
     `;
-    
+
     const examsContainer = document.getElementById('examsContainer');
     examsContainer.appendChild(examItem);
-    
+
     // Agregar event listeners para los botones del nuevo examen
     setupExamEventListeners(examItem, examId);
-    
+
     // Mostrar el botón de eliminar en todos los exámenes si hay más de uno
     updateRemoveButtons();
-    
+
     // Enfocar el nuevo textarea
     const textarea = examItem.querySelector('.exam-textarea');
     textarea.focus();
-    
+
     // Registrar el nuevo examen
     currentExams.set(examId, '');
-    
+
     mostrarNotificacion(`Examen #${examId} agregado`, 'success');
 }
 
@@ -522,37 +522,37 @@ function setupExamEventListeners(examItem, examId) {
     const pasteBtn = examItem.querySelector('.exam-paste-btn');
     const clearBtn = examItem.querySelector('.exam-clear-btn');
     const removeBtn = examItem.querySelector('.exam-remove-btn');
-    
+
     // Event listener para cambios en el textarea
     let extractTimeout;
-    textarea.addEventListener('input', function() {
+    textarea.addEventListener('input', function () {
         const texto = this.value.trim();
         currentExams.set(examId, texto);
-        
+
         clearTimeout(extractTimeout);
         extractTimeout = setTimeout(extraerAutomaticamente, 300);
     });
-    
+
     // Extraer inmediatamente cuando se pega contenido
-    textarea.addEventListener('paste', function() {
+    textarea.addEventListener('paste', function () {
         setTimeout(() => {
             currentExams.set(examId, this.value.trim());
             extraerAutomaticamente();
         }, 100);
     });
-    
+
     // Botón pegar
-    pasteBtn.addEventListener('click', function() {
+    pasteBtn.addEventListener('click', function () {
         pegarTextoEnExamen(examId, textarea);
     });
-    
+
     // Botón limpiar
-    clearBtn.addEventListener('click', function() {
+    clearBtn.addEventListener('click', function () {
         limpiarTextoExamen(examId, textarea);
     });
-    
+
     // Botón eliminar
-    removeBtn.addEventListener('click', function() {
+    removeBtn.addEventListener('click', function () {
         eliminarExamen(examId, examItem);
     });
 }
@@ -563,7 +563,7 @@ function pegarTextoEnExamen(examId, textarea) {
         mostrarNotificacion('Tu navegador no soporta la funcionalidad de portapapeles', 'error');
         return;
     }
-    
+
     navigator.clipboard.readText()
         .then(text => {
             if (text.trim()) {
@@ -602,7 +602,7 @@ function eliminarExamen(examId, examItem) {
 function updateRemoveButtons() {
     const examItems = document.querySelectorAll('.exam-item');
     const showRemoveButtons = examItems.length > 1;
-    
+
     examItems.forEach(item => {
         const removeBtn = item.querySelector('.exam-remove-btn');
         removeBtn.style.display = showRemoveButtons ? 'flex' : 'none';
@@ -612,12 +612,12 @@ function updateRemoveButtons() {
 // Función para limpiar todos los exámenes
 function limpiarTodosLosExamenes() {
     const examItems = document.querySelectorAll('.exam-item');
-    
+
     if (examItems.length === 0) {
         mostrarNotificacion('No hay exámenes para limpiar', 'error');
         return;
     }
-    
+
     // Mantener solo el primer examen y limpiarlo
     examItems.forEach((item, index) => {
         if (index === 0) {
@@ -631,7 +631,7 @@ function limpiarTodosLosExamenes() {
             item.remove();
         }
     });
-    
+
     updateRemoveButtons();
     extraerAutomaticamente();
     mostrarNotificacion('Todos los exámenes limpiados', 'info');
@@ -671,7 +671,11 @@ function extraerAutomaticamente() {
 
     try {
         let resultadosFinales = [];
-        
+
+        // Aplicar opciones de formato al extractor
+        const opcionesFormato = obtenerOpcionesFormato();
+        extractor.setFormatOptions(opcionesFormato);
+
         // Procesar cada examen
         textosExamenes.forEach(examen => {
             // Caso especial: "Tal cual"
@@ -682,7 +686,7 @@ function extraerAutomaticamente() {
 
             // Extraer datos del examen
             const resultado = extractor.procesar(examen.texto, opcionesSeleccionadas);
-            
+
             if (resultado && resultado.trim()) {
                 // Agregar encabezado del examen si hay múltiples exámenes
                 if (textosExamenes.length > 1) {
@@ -696,7 +700,7 @@ function extraerAutomaticamente() {
                 }
             }
         });
-        
+
         if (resultadosFinales.length > 0) {
             const resultadoFinal = resultadosFinales.join('\n\n');
             mostrarResultados(resultadoFinal);
@@ -715,12 +719,164 @@ function obtenerOpcionesSeleccionadas() {
     return Array.from(checkboxes).map(cb => cb.value);
 }
 
+// Función para obtener opciones de formato
+function obtenerOpcionesFormato() {
+    const usarDosPuntos = document.getElementById('usarDosPuntos');
+    const usarMayusculas = document.getElementById('usarMayusculas');
+    const usarSaltosLinea = document.getElementById('usarSaltosLinea');
+    const usarHb = document.getElementById('usarHb');
+    const dateFormatSelect = document.getElementById('dateFormatSelect');
+
+    return {
+        usarDosPuntos: usarDosPuntos ? usarDosPuntos.checked : true,
+        usarMayusculas: usarMayusculas ? usarMayusculas.checked : false,
+        usarSaltosLinea: usarSaltosLinea ? usarSaltosLinea.checked : true,
+        usarHb: usarHb ? usarHb.checked : true,
+        dateFormat: dateFormatSelect ? dateFormatSelect.value : 'dd/mm/yyyy'
+    };
+}
+
+// Función para guardar opciones de formato en localStorage
+function guardarOpcionesFormato() {
+    const opciones = obtenerOpcionesFormato();
+    localStorage.setItem('extractorFormatOptions', JSON.stringify(opciones));
+}
+
+// Función para cargar opciones de formato desde localStorage
+function cargarOpcionesFormato() {
+    const saved = localStorage.getItem('extractorFormatOptions');
+    if (saved) {
+        try {
+            const opciones = JSON.parse(saved);
+
+            const usarDosPuntos = document.getElementById('usarDosPuntos');
+            const usarMayusculas = document.getElementById('usarMayusculas');
+            const usarSaltosLinea = document.getElementById('usarSaltosLinea');
+            const usarHb = document.getElementById('usarHb');
+            const dateFormatSelect = document.getElementById('dateFormatSelect');
+
+            if (usarDosPuntos && opciones.usarDosPuntos !== undefined) usarDosPuntos.checked = opciones.usarDosPuntos;
+            if (usarMayusculas && opciones.usarMayusculas !== undefined) usarMayusculas.checked = opciones.usarMayusculas;
+            if (usarSaltosLinea && opciones.usarSaltosLinea !== undefined) usarSaltosLinea.checked = opciones.usarSaltosLinea;
+            if (usarHb && opciones.usarHb !== undefined) usarHb.checked = opciones.usarHb;
+            if (dateFormatSelect && opciones.dateFormat) dateFormatSelect.value = opciones.dateFormat;
+
+        } catch (e) {
+            console.error('Error cargando opciones', e);
+        }
+    }
+}
+
+// Función para inicializar listeners de opciones de formato
+function inicializarOpcionesFormato() {
+    const formatToggles = ['usarDosPuntos', 'usarMayusculas', 'usarSaltosLinea', 'usarHb'];
+
+    formatToggles.forEach(id => {
+        const toggle = document.getElementById(id);
+        if (toggle) {
+            toggle.addEventListener('change', function () {
+                guardarOpcionesFormato();
+                extraerAutomaticamente();
+            });
+        }
+    });
+
+    // Listener para selector de fecha
+    const dateFormatSelect = document.getElementById('dateFormatSelect');
+    if (dateFormatSelect) {
+        dateFormatSelect.addEventListener('change', function () {
+            guardarOpcionesFormato();
+            extraerAutomaticamente();
+        });
+    }
+    // Cargar opciones guardadas
+    cargarOpcionesFormato();
+}
+
+// Inicializar Drag & Drop
+function inicializarDragAndDrop() {
+    const draggables = document.querySelectorAll('.draggable-item');
+    const container = document.querySelector('.selection-grid-compact');
+
+    // Variable para trackear si el drag inició desde un handle
+    let dragStartedFromHandle = false;
+
+    draggables.forEach(draggable => {
+        // Detectar si el mousedown fue en el drag-handle
+        draggable.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.drag-handle')) {
+                dragStartedFromHandle = true;
+            } else {
+                dragStartedFromHandle = false;
+            }
+        });
+
+        draggable.addEventListener('dragstart', (e) => {
+            // Solo permitir arrastre si empezó desde el handle
+            if (!dragStartedFromHandle) {
+                e.preventDefault();
+                return;
+            }
+            draggable.classList.add('dragging');
+        });
+
+        draggable.addEventListener('dragend', () => {
+            draggable.classList.remove('dragging');
+            dragStartedFromHandle = false; // Resetear
+            // Al soltar, el orden del DOM ha cambiado, así que actualizamos la extracción
+            extraerAutomaticamente();
+        });
+    });
+
+    if (container) {
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(container, e.clientY, e.clientX);
+            const draggable = document.querySelector('.dragging');
+            if (draggable) {
+                if (afterElement == null) {
+                    container.appendChild(draggable);
+                } else {
+                    container.insertBefore(draggable, afterElement);
+                }
+            }
+        });
+    }
+
+    // Resetear en mouseup para limpiar el estado si no hubo drag
+    document.addEventListener('mouseup', () => {
+        dragStartedFromHandle = false;
+    });
+}
+
+// Helper para Drag & Drop
+function getDragAfterElement(container, y, x) {
+    const draggableElements = [...container.querySelectorAll('.draggable-item:not(.dragging)')];
+
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        // Distancia simple basada en centros, podría mejorarse para grid preciso
+        const offsetX = x - (box.left + box.width / 2);
+        const offsetY = y - (box.top + box.height / 2);
+        const dist = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+
+        // Simplemente devolver el más cercano en distancia euclidiana
+        // O usar lógica tradicional Y-axis si fuera lista vertical
+
+        if (closest == null || dist < closest.dist) {
+            return { offset: dist, element: child, dist: dist };
+        } else {
+            return closest;
+        }
+    }, null).element;
+}
+
 // Función para mostrar estado
 function mostrarEstado(mensaje) {
     const resultsStatus = document.getElementById('resultsStatus');
     const resultsDiv = document.getElementById('results');
     const copyArea = document.getElementById('copyArea');
-    
+
     resultsStatus.style.display = 'block';
     resultsDiv.style.display = 'none';
     copyArea.style.display = 'none';
@@ -732,17 +888,17 @@ function mostrarResultados(resultado) {
     const resultsDiv = document.getElementById('results');
     const resultsStatus = document.getElementById('resultsStatus');
     const copyArea = document.getElementById('copyArea');
-    
+
     // Convertir tanto saltos de línea normales como soft line breaks a <br> para visualización
     const htmlResult = resultado
         .replace(/\n/g, '<br>')           // Saltos de línea normales
         .replace(/\u2028/g, '<br>');      // Line Separator (soft line break)
-    
+
     resultsDiv.innerHTML = htmlResult;
-    
+
     // Guardar el texto original con saltos de línea para la función de copia
     resultsDiv.setAttribute('data-original-text', resultado);
-    
+
     resultsDiv.style.display = 'block';
     resultsStatus.style.display = 'none';
     copyArea.style.display = 'flex';
@@ -753,7 +909,7 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     const notification = document.getElementById('notification');
     notification.textContent = mensaje;
     notification.className = `notification show ${tipo}`;
-    
+
     setTimeout(() => {
         notification.classList.remove('show');
     }, 3000);
@@ -762,10 +918,10 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 // Función para copiar resultados como texto plano
 function copiarResultado() {
     const resultsDiv = document.getElementById('results');
-    
+
     // Usar el texto original con saltos de línea preservados
     const resultText = resultsDiv.getAttribute('data-original-text') || resultsDiv.textContent;
-    
+
     if (!resultText) {
         mostrarNotificacion('No hay resultados para copiar', 'error');
         return;
@@ -788,20 +944,20 @@ function copiarResultado() {
 // Función para copiar resultados como HTML (compatible con editores web como Summernote)
 function copiarResultadoHTML() {
     const resultsDiv = document.getElementById('results');
-    
+
     // Usar el texto original y convertirlo a HTML
     const resultText = resultsDiv.getAttribute('data-original-text') || resultsDiv.textContent;
-    
+
     if (!resultText) {
         mostrarNotificacion('No hay resultados para copiar', 'error');
         return;
     }
-    
+
     // Crear diferentes versiones de HTML para máxima compatibilidad con Summernote
     const htmlResult = resultText
         .replace(/\n/g, '<br />')           // Saltos de línea normales con XHTML
         .replace(/\u2028/g, '<br />');      // Line Separator con XHTML
-    
+
     // Versión con div para Summernote (algunos editores prefieren divs)
     const htmlWithDivs = resultText
         .split(/\n|\u2028/)
@@ -809,19 +965,19 @@ function copiarResultadoHTML() {
         .filter(line => line.length > 0)
         .map(line => `<div>${line}</div>`)
         .join('');
-    
+
     // Versión con p tags
     const htmlWithP = `<p>${resultText
         .replace(/\n/g, '<br />')
         .replace(/\u2028/g, '<br />')}</p>`;
-    
+
     // Copiar múltiples formatos al portapapeles
     if (navigator.clipboard && navigator.clipboard.write) {
         const clipboardItem = new ClipboardItem({
             'text/html': new Blob([htmlWithP], { type: 'text/html' }), // Formato principal
             'text/plain': new Blob([resultText], { type: 'text/plain' })
         });
-        
+
         navigator.clipboard.write([clipboardItem]).then(() => {
             mostrarNotificacion('Resultado HTML copiado (prueba pegando en Summernote)', 'success');
         }).catch((error) => {
@@ -844,7 +1000,7 @@ function copiarHTMLFallback(htmlContent, textContent) {
     tempDiv.style.top = '-9999px';
     tempDiv.innerHTML = htmlContent;
     document.body.appendChild(tempDiv);
-    
+
     try {
         // Seleccionar el contenido
         const range = document.createRange();
@@ -852,10 +1008,10 @@ function copiarHTMLFallback(htmlContent, textContent) {
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
-        
+
         // Intentar copiar
         const successful = document.execCommand('copy');
-        
+
         if (successful) {
             mostrarNotificacion('HTML copiado (método alternativo)', 'success');
         } else {
@@ -881,44 +1037,44 @@ function copiarHTMLFallback(htmlContent, textContent) {
 function copiarParaSummernote() {
     const resultsDiv = document.getElementById('results');
     const resultText = resultsDiv.getAttribute('data-original-text') || resultsDiv.textContent;
-    
+
     if (!resultText) {
         mostrarNotificacion('No hay resultados para copiar', 'error');
         return;
     }
-    
+
     // Crear contenido HTML estructurado específicamente para Summernote
     // Summernote funciona mejor con párrafos y <br> dentro de ellos
     const lines = resultText.split(/\n|\u2028/);
     let htmlContent = '';
-    
+
     if (lines.length > 0) {
         // Primera línea (fecha) como párrafo separado
         if (lines[0] && lines[0].trim()) {
             htmlContent += `<p><strong>${lines[0].trim()}</strong></p>`;
         }
-        
+
         // Resto de líneas como un párrafo con saltos de línea
         const remainingLines = lines.slice(1).filter(line => line.trim());
         if (remainingLines.length > 0) {
             htmlContent += `<p>${remainingLines.join('<br>')}</p>`;
         }
     }
-    
+
     // Método de copia específico que Summernote entiende mejor
     const tempTextArea = document.createElement('textarea');
     tempTextArea.style.position = 'fixed';
     tempTextArea.style.left = '-9999px';
     tempTextArea.value = htmlContent;
     document.body.appendChild(tempTextArea);
-    
+
     try {
         tempTextArea.select();
         tempTextArea.setSelectionRange(0, 99999); // Para dispositivos móviles
-        
+
         // Copiar el HTML como texto para que Summernote lo interprete
         const successful = document.execCommand('copy');
-        
+
         if (successful) {
             mostrarNotificacion('HTML para Summernote copiado - pega con Ctrl+Shift+V', 'success');
         } else {
@@ -965,12 +1121,12 @@ function limpiarSeleccion() {
 // Función para pegar texto del portapapeles
 function pegarTextoDelPortapapeles() {
     const textarea = document.getElementById('copyPasteText');
-    
+
     if (!navigator.clipboard) {
         mostrarNotificacion('Tu navegador no soporta la funcionalidad de portapapeles', 'error');
         return;
     }
-    
+
     navigator.clipboard.readText()
         .then(text => {
             if (text.trim()) {
@@ -999,33 +1155,33 @@ function limpiarTexto() {
 function initializeThemeToggle() {
     const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
-    
+
     // Detectar preferencia del sistema
     const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     // Obtener tema guardado o usar preferencia del sistema
     const savedTheme = localStorage.getItem('theme');
     const initialTheme = savedTheme || (prefersDarkScheme.matches ? 'dark' : 'light');
-    
+
     // Aplicar tema inicial
     applyTheme(initialTheme);
-    
+
     // Event listener para el botón
     if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
+        themeToggle.addEventListener('click', function () {
             const currentTheme = html.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             applyTheme(newTheme);
             localStorage.setItem('theme', newTheme);
-            
+
             // Mostrar notificación - DESHABILITADO
             // const mensaje = newTheme === 'dark' ? 'Modo oscuro activado' : 'Modo claro activado';
             // mostrarNotificacion(mensaje, 'info');
         });
     }
-    
+
     // Escuchar cambios en la preferencia del sistema
-    prefersDarkScheme.addEventListener('change', function() {
+    prefersDarkScheme.addEventListener('change', function () {
         if (!localStorage.getItem('theme')) {
             applyTheme(prefersDarkScheme.matches ? 'dark' : 'light');
         }
@@ -1035,31 +1191,31 @@ function initializeThemeToggle() {
 function applyTheme(theme) {
     const html = document.documentElement;
     html.setAttribute('data-theme', theme);
-    
+
     // Actualizar meta theme-color para navegadores móviles
     updateThemeColor(theme);
 }
 
 function updateThemeColor(theme) {
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    
+
     if (!themeColorMeta) {
         themeColorMeta = document.createElement('meta');
         themeColorMeta.name = 'theme-color';
         document.head.appendChild(themeColorMeta);
     }
-    
+
     // Colores para la barra de estado del navegador móvil
     const themeColors = {
         light: '#ffffff',
         dark: '#1f2937'
     };
-    
+
     themeColorMeta.content = themeColors[theme] || themeColors.light;
 }
 
 // ===== INICIALIZACIÓN =====
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const copyPasteTextarea = document.getElementById('copyPasteText');
     const selectAllBtn = document.getElementById('selectAllBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
@@ -1071,16 +1227,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', extraerAutomaticamente);
     });
-    
+
+    // Inicializar opciones de formato
+    inicializarOpcionesFormato();
+
+    // Inicializar Drag & Drop
+    inicializarDragAndDrop();
+
     // Detectar cambios en el textarea con debounce
     let extractTimeout;
-    copyPasteTextarea.addEventListener('input', function() {
+    copyPasteTextarea.addEventListener('input', function () {
         clearTimeout(extractTimeout);
         extractTimeout = setTimeout(extraerAutomaticamente, 300);
     });
-    
+
     // Extraer inmediatamente cuando se pega contenido
-    copyPasteTextarea.addEventListener('paste', function() {
+    copyPasteTextarea.addEventListener('paste', function () {
         setTimeout(extraerAutomaticamente, 100);
     });
 
@@ -1088,43 +1250,43 @@ document.addEventListener('DOMContentLoaded', function() {
     selectAllBtn.addEventListener('click', seleccionarTodo);
     clearAllBtn.addEventListener('click', limpiarSeleccion);
     copyBtn.addEventListener('click', copiarResultado);
-    
+
     // Botón de copia HTML
     if (copyHtmlBtn) {
         copyHtmlBtn.addEventListener('click', copiarResultadoHTML);
     }
-    
+
     // Botón de copia para Summernote
     if (copySummernoteBtn) {
         copySummernoteBtn.addEventListener('click', copiarParaSummernote);
     }
-    
+
     // Botones del texto
     const pasteTextBtn = document.getElementById('pasteTextBtn');
     const clearTextBtn = document.getElementById('clearTextBtn');
-    
+
     if (pasteTextBtn) {
         pasteTextBtn.addEventListener('click', pegarTextoDelPortapapeles);
     }
-    
+
     if (clearTextBtn) {
         clearTextBtn.addEventListener('click', limpiarTexto);
     }
-    
+
     // Botones de descarga de tabla
     const downloadImageBtn = document.getElementById('downloadImageBtn');
     const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-    
+
     if (downloadImageBtn) {
         downloadImageBtn.addEventListener('click', descargarTablaComoImagen);
     }
-    
+
     if (downloadPdfBtn) {
         downloadPdfBtn.addEventListener('click', descargarTablaComoPDF);
     }
 
     // Atajos de teclado
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
@@ -1132,32 +1294,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
     // Funcionalidad de pestañas
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
-    
+
     tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const targetTab = this.getAttribute('data-tab');
-            
+
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-            
+
             this.classList.add('active');
             document.getElementById(`tab-${targetTab}`).classList.add('active');
-            
+
             // Si se selecciona la pestaña tabla, generar tabla comparativa
             if (targetTab === 'tabla') {
                 generarTablaComparativa();
             }
         });
     });
-    
+
     // Activación automática para "Lisis Tumoral"
     const lisisCb = document.querySelector('.selection-checkbox[value="LisisTumoral"]');
     if (lisisCb) {
-        lisisCb.addEventListener('change', function() {
+        lisisCb.addEventListener('change', function () {
             if (this.checked) {
                 // Asegurar Renal y Hepático
                 const renalCb = document.querySelector('.selection-checkbox[value="Renal"]');
@@ -1197,33 +1359,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Ejecutar extracción inicial
     extraerAutomaticamente();
-    
+
     // Inicializar funcionalidad del desplegable de hemograma
     initializeHemogramaDropdown();
-    
+
     // Inicializar funcionalidad del desplegable de renal
     initializeRenalDropdown();
-    
+
     // ===== INICIALIZACIÓN DE MÚLTIPLES EXÁMENES =====
     // Botones de gestión de exámenes
     const addNewExamBtn = document.getElementById('addNewExamBtn');
     const clearAllExamsBtn = document.getElementById('clearAllExamsBtn');
-    
+
     if (addNewExamBtn) {
         addNewExamBtn.addEventListener('click', agregarNuevoExamen);
     }
-    
+
     if (clearAllExamsBtn) {
         clearAllExamsBtn.addEventListener('click', limpiarTodosLosExamenes);
     }
-    
+
     // Configurar event listeners del primer examen existente
     const firstExamItem = document.querySelector('.exam-item[data-exam-id="1"]');
     if (firstExamItem) {
         setupExamEventListeners(firstExamItem, 1);
         currentExams.set(1, ''); // Registrar el primer examen
     }
-    
+
     // Inicializar tema
     initializeThemeToggle();
 });
@@ -1297,13 +1459,13 @@ function generarTablaComparativa() {
     const textoExamen = document.getElementById('copyPasteText').value.trim();
     const tableContainer = document.querySelector('.comparative-table-container');
     const tableActions = document.getElementById('tableActions');
-    
+
     if (!textoExamen) {
         tableContainer.innerHTML = '<p class="status-text">Pega el texto del reporte médico para generar la tabla comparativa</p>';
         tableActions.style.display = 'none';
         return;
     }
-    
+
     // Crear tabla HTML
     let tableHTML = `
         <table class="comparative-table">
@@ -1315,13 +1477,13 @@ function generarTablaComparativa() {
             </thead>
             <tbody>
     `;
-    
+
     let valoresEncontrados = 0;
-    
+
     // Procesar cada parámetro en orden
     PARAMETROS_TABLA.forEach(parametro => {
         let valor = '-';
-        
+
         if (parametro.patron) {
             const match = textoExamen.match(parametro.patron);
             if (match && match[1]) {
@@ -1334,7 +1496,7 @@ function generarTablaComparativa() {
                 }
             }
         }
-        
+
         tableHTML += `
             <tr>
                 <td>${parametro.nombre}</td>
@@ -1342,12 +1504,12 @@ function generarTablaComparativa() {
             </tr>
         `;
     });
-    
+
     tableHTML += `
             </tbody>
         </table>
     `;
-    
+
     // Mostrar tabla o mensaje de estado
     if (valoresEncontrados > 0) {
         tableContainer.innerHTML = tableHTML;
@@ -1362,18 +1524,18 @@ function generarTablaComparativa() {
 function descargarTablaComoImagen() {
     const tableContainer = document.querySelector('.comparative-table-container');
     const table = tableContainer.querySelector('.comparative-table');
-    
+
     if (!table) {
         mostrarNotificacion('No hay tabla para descargar', 'error');
         return;
     }
-    
+
     // Verificar si html2canvas está disponible
     if (typeof html2canvas === 'undefined') {
         mostrarNotificacion('html2canvas no está disponible', 'error');
         return;
     }
-    
+
     html2canvas(table, {
         scale: 2,
         backgroundColor: '#ffffff',
@@ -1383,11 +1545,11 @@ function descargarTablaComoImagen() {
         const link = document.createElement('a');
         link.download = `tabla-comparativa-${new Date().toISOString().split('T')[0]}.png`;
         link.href = canvas.toDataURL('image/png');
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         mostrarNotificacion('Tabla descargada como imagen', 'success');
     }).catch(error => {
         console.error('Error al generar imagen:', error);
@@ -1398,22 +1560,22 @@ function descargarTablaComoImagen() {
 // Funcionalidad del desplegable de hemograma
 function initializeHemogramaDropdown() {
     console.log('=== INICIANDO DESPLEGABLE DE HEMOGRAMA ===');
-    
+
     const dropdownToggle = document.querySelector('.hemograma-with-dropdown .dropdown-toggle-inline');
     const dropdownContent = document.getElementById('hemograma-dropdown');
     const hemogramaContainer = document.querySelector('.hemograma-with-dropdown');
-    
+
     console.log('Dropdown toggle encontrado:', dropdownToggle);
     console.log('Dropdown content encontrado:', dropdownContent);
-    
+
     if (!dropdownToggle || !dropdownContent || !hemogramaContainer) {
         console.warn('Elementos del desplegable de hemograma no encontrados');
         return;
     }
-    
+
     let hoverTimeout = null;
     let isClickOpen = false;
-    
+
     // Función para abrir dropdown
     function openDropdown() {
         // Cerrar todos los otros desplegables
@@ -1427,35 +1589,35 @@ function initializeHemogramaDropdown() {
                 }
             }
         });
-        
+
         dropdownContent.classList.add('show');
         document.body.classList.add('dropdown-open');
-        
+
         // Agregar clase al step-card padre para aumentar z-index
         const parentStepCard = dropdownContent.closest('.step-card');
         if (parentStepCard) {
             parentStepCard.classList.add('dropdown-parent-active');
         }
-        
+
         // Rotar el chevron
         const chevron = dropdownToggle.querySelector('svg');
         if (chevron) {
             chevron.style.transform = 'rotate(180deg)';
         }
     }
-    
+
     // Función para cerrar dropdown
     function closeDropdown() {
         if (!isClickOpen) {
             dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
-            
+
             // Remover clase del step-card padre para reducir z-index
             const parentStepCard = dropdownContent.closest('.step-card');
             if (parentStepCard) {
                 parentStepCard.classList.remove('dropdown-parent-active');
             }
-            
+
             // Resetear chevron
             const chevron = dropdownToggle.querySelector('svg');
             if (chevron) {
@@ -1463,9 +1625,9 @@ function initializeHemogramaDropdown() {
             }
         }
     }
-    
+
     // Hover events para el contenedor completo
-    hemogramaContainer.addEventListener('mouseenter', function() {
+    hemogramaContainer.addEventListener('mouseenter', function () {
         if (hoverTimeout) clearTimeout(hoverTimeout);
         hoverTimeout = setTimeout(() => {
             if (!dropdownContent.classList.contains('show')) {
@@ -1473,13 +1635,13 @@ function initializeHemogramaDropdown() {
             }
         }, 1000); // 1 segundo de delay
     });
-    
-    hemogramaContainer.addEventListener('mouseleave', function() {
+
+    hemogramaContainer.addEventListener('mouseleave', function () {
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
         }
-        
+
         // Solo cerrar si no está abierto por click
         setTimeout(() => {
             if (!hemogramaContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
@@ -1487,38 +1649,38 @@ function initializeHemogramaDropdown() {
             }
         }, 200);
     });
-    
+
     // Mantener abierto cuando el mouse está sobre el dropdown
-    dropdownContent.addEventListener('mouseenter', function() {
+    dropdownContent.addEventListener('mouseenter', function () {
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
         }
     });
-    
-    dropdownContent.addEventListener('mouseleave', function() {
+
+    dropdownContent.addEventListener('mouseleave', function () {
         setTimeout(() => {
             if (!hemogramaContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
                 closeDropdown();
             }
         }, 200);
     });
-    
+
     // Toggle del desplegable por click
-    dropdownToggle.addEventListener('click', function(e) {
+    dropdownToggle.addEventListener('click', function (e) {
         console.log('CLICK EN HEMOGRAMA DROPDOWN');
         e.preventDefault();
         e.stopPropagation();
-        
+
         const isOpen = dropdownContent.classList.contains('show');
         console.log('¿Está abierto?', isOpen);
-        
+
         if (isOpen) {
             // Si está abierto, cerrarlo
             isClickOpen = false;
             dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
-            
+
             // Resetear chevron
             const chevron = this.querySelector('svg');
             if (chevron) {
@@ -1530,29 +1692,29 @@ function initializeHemogramaDropdown() {
             openDropdown();
         }
     });
-    
+
     // Botones Todo y Borrar del hemograma
     const selectAllHemogramaBtn = document.getElementById('selectAllHemogramaBtn');
     const clearAllHemogramaBtn = document.getElementById('clearAllHemogramaBtn');
-    
+
     if (selectAllHemogramaBtn) {
-        selectAllHemogramaBtn.addEventListener('click', function() {
+        selectAllHemogramaBtn.addEventListener('click', function () {
             document.querySelectorAll('.hemograma-extra').forEach(cb => cb.checked = true);
             extraerAutomaticamente();
             mostrarNotificacion('Todos los parámetros de hemograma seleccionados', 'info');
         });
     }
-    
+
     if (clearAllHemogramaBtn) {
-        clearAllHemogramaBtn.addEventListener('click', function() {
+        clearAllHemogramaBtn.addEventListener('click', function () {
             document.querySelectorAll('.hemograma-extra').forEach(cb => cb.checked = false);
             extraerAutomaticamente();
             mostrarNotificacion('Selección de hemograma borrada', 'info');
         });
     }
-    
+
     // Cerrar desplegable al hacer clic fuera
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!e.target.closest('.selection-item-with-dropdown')) {
             document.querySelectorAll('.dropdown-content').forEach(dropdown => {
                 dropdown.classList.remove('show');
@@ -1563,33 +1725,33 @@ function initializeHemogramaDropdown() {
                 }
             });
             document.body.classList.remove('dropdown-open');
-            
+
             // Resetear rotación de chevrons
             document.querySelectorAll('.dropdown-toggle-inline svg').forEach(chevron => {
                 chevron.style.transform = 'rotate(0deg)';
             });
         }
     });
-    
+
     console.log('=== DESPLEGABLE DE HEMOGRAMA INICIADO ===');
 }
 
 // Funcionalidad del desplegable de renal
 function initializeRenalDropdown() {
     console.log('=== INICIANDO DESPLEGABLE DE RENAL ===');
-    
+
     const dropdownToggle = document.querySelector('.renal-with-dropdown .dropdown-toggle-inline');
     const dropdownContent = document.getElementById('renal-dropdown');
     const renalContainer = document.querySelector('.renal-with-dropdown');
-    
+
     if (!dropdownToggle || !dropdownContent || !renalContainer) {
         console.warn('Elementos del desplegable de renal no encontrados');
         return;
     }
-    
+
     let hoverTimeout = null;
     let isClickOpen = false;
-    
+
     // Función para abrir dropdown
     function openDropdown() {
         // Cerrar todos los otros desplegables
@@ -1603,35 +1765,35 @@ function initializeRenalDropdown() {
                 }
             }
         });
-        
+
         dropdownContent.classList.add('show');
         document.body.classList.add('dropdown-open');
-        
+
         // Agregar clase al step-card padre para aumentar z-index
         const parentStepCard = dropdownContent.closest('.step-card');
         if (parentStepCard) {
             parentStepCard.classList.add('dropdown-parent-active');
         }
-        
+
         // Rotar el chevron
         const chevron = dropdownToggle.querySelector('svg');
         if (chevron) {
             chevron.style.transform = 'rotate(180deg)';
         }
     }
-    
+
     // Función para cerrar dropdown
     function closeDropdown() {
         if (!isClickOpen) {
             dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
-            
+
             // Remover clase del step-card padre para reducir z-index
             const parentStepCard = dropdownContent.closest('.step-card');
             if (parentStepCard) {
                 parentStepCard.classList.remove('dropdown-parent-active');
             }
-            
+
             // Resetear chevron
             const chevron = dropdownToggle.querySelector('svg');
             if (chevron) {
@@ -1639,9 +1801,9 @@ function initializeRenalDropdown() {
             }
         }
     }
-    
+
     // Hover events para el contenedor completo
-    renalContainer.addEventListener('mouseenter', function() {
+    renalContainer.addEventListener('mouseenter', function () {
         if (hoverTimeout) clearTimeout(hoverTimeout);
         hoverTimeout = setTimeout(() => {
             if (!dropdownContent.classList.contains('show')) {
@@ -1649,13 +1811,13 @@ function initializeRenalDropdown() {
             }
         }, 1000); // 1 segundo de delay
     });
-    
-    renalContainer.addEventListener('mouseleave', function() {
+
+    renalContainer.addEventListener('mouseleave', function () {
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
         }
-        
+
         // Solo cerrar si no está abierto por click
         setTimeout(() => {
             if (!renalContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
@@ -1663,36 +1825,36 @@ function initializeRenalDropdown() {
             }
         }, 200);
     });
-    
+
     // Mantener abierto cuando el mouse está sobre el dropdown
-    dropdownContent.addEventListener('mouseenter', function() {
+    dropdownContent.addEventListener('mouseenter', function () {
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             hoverTimeout = null;
         }
     });
-    
-    dropdownContent.addEventListener('mouseleave', function() {
+
+    dropdownContent.addEventListener('mouseleave', function () {
         setTimeout(() => {
             if (!renalContainer.matches(':hover') && !dropdownContent.matches(':hover')) {
                 closeDropdown();
             }
         }, 200);
     });
-    
+
     // Toggle del desplegable por click
-    dropdownToggle.addEventListener('click', function(e) {
+    dropdownToggle.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         const isOpen = dropdownContent.classList.contains('show');
-        
+
         if (isOpen) {
             // Si está abierto, cerrarlo
             isClickOpen = false;
             dropdownContent.classList.remove('show');
             document.body.classList.remove('dropdown-open');
-            
+
             // Resetear chevron
             const chevron = this.querySelector('svg');
             if (chevron) {
@@ -1704,70 +1866,90 @@ function initializeRenalDropdown() {
             openDropdown();
         }
     });
-    
+
     // Botones Todo y Borrar del renal
     const selectAllRenalBtn = document.getElementById('selectAllRenalBtn');
     const clearAllRenalBtn = document.getElementById('clearAllRenalBtn');
-    
+
     if (selectAllRenalBtn) {
-        selectAllRenalBtn.addEventListener('click', function() {
+        selectAllRenalBtn.addEventListener('click', function () {
             document.querySelectorAll('.renal-extra').forEach(cb => cb.checked = true);
             extraerAutomaticamente();
             mostrarNotificacion('Todos los parámetros renales seleccionados', 'info');
         });
     }
-    
+
     if (clearAllRenalBtn) {
-        clearAllRenalBtn.addEventListener('click', function() {
+        clearAllRenalBtn.addEventListener('click', function () {
             document.querySelectorAll('.renal-extra').forEach(cb => cb.checked = false);
             extraerAutomaticamente();
             mostrarNotificacion('Selección renal borrada', 'info');
         });
     }
-    
-    console.log('=== DESPLEGABLE DE RENAL INICIADO ===');
+
+    // Botones Todo y Borrar del nutricional
+    const selectAllNutricionalBtn = document.getElementById('selectAllNutricionalBtn');
+    const clearAllNutricionalBtn = document.getElementById('clearAllNutricionalBtn');
+
+    if (selectAllNutricionalBtn) {
+        selectAllNutricionalBtn.addEventListener('click', function () {
+            document.querySelectorAll('.nutricional-extra').forEach(cb => cb.checked = true);
+            extraerAutomaticamente();
+            mostrarNotificacion('Todos los parámetros nutricionales seleccionados', 'info');
+        });
+    }
+
+    if (clearAllNutricionalBtn) {
+        clearAllNutricionalBtn.addEventListener('click', function () {
+            document.querySelectorAll('.nutricional-extra').forEach(cb => cb.checked = false);
+            extraerAutomaticamente();
+            mostrarNotificacion('Selección nutricional borrada', 'info');
+        });
+    }
+
+    console.log('=== DESPLEGABLE DE RENAL Y NUTRICIONAL INICIADO ===');
 }
 
 // Función para descargar tabla como PDF (requiere jsPDF)
 function descargarTablaComoPDF() {
     const table = document.querySelector('.comparative-table');
-    
+
     if (!table) {
         mostrarNotificacion('No hay tabla para descargar', 'error');
         return;
     }
-    
+
     // Verificar si jsPDF está disponible
     if (typeof window.jsPDF === 'undefined') {
         mostrarNotificacion('jsPDF no está disponible', 'error');
         return;
     }
-    
+
     try {
         const { jsPDF } = window.jsPDF;
         const pdf = new jsPDF();
-        
+
         // Título del PDF
         pdf.setFontSize(16);
         pdf.text('Tabla Comparativa - Extractor Médico', 20, 20);
-        
+
         // Obtener datos de la tabla
         const rows = table.querySelectorAll('tbody tr');
         let yPosition = 40;
-        
+
         pdf.setFontSize(12);
-        
+
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length >= 2) {
                 const parametro = cells[0].textContent.trim();
                 const valor = cells[1].textContent.trim();
-                
+
                 // Solo incluir filas con valores (no "-")
                 if (valor !== '-') {
                     pdf.text(`${parametro}: ${valor}`, 20, yPosition);
                     yPosition += 8;
-                    
+
                     // Nueva página si es necesario
                     if (yPosition > 280) {
                         pdf.addPage();
@@ -1776,13 +1958,83 @@ function descargarTablaComoPDF() {
                 }
             }
         });
-        
+
         // Descargar PDF
         pdf.save(`tabla-comparativa-${new Date().toISOString().split('T')[0]}.pdf`);
         mostrarNotificacion('PDF generado correctamente', 'success');
-        
+
     } catch (error) {
         console.error('Error al generar PDF:', error);
         mostrarNotificacion('Error al generar el PDF', 'error');
     }
 }
+// ===== SISTEMA DE SUGERENCIAS =====
+function initSuggestionModal() {
+    const modal = document.getElementById('suggestionModal');
+    const openBtn = document.getElementById('suggestionBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelSuggestionBtn');
+    const sendBtn = document.getElementById('sendSuggestionBtn');
+    const titleInput = document.getElementById('suggestionTitle');
+    const messageInput = document.getElementById('suggestionMessage');
+
+    if (!modal || !openBtn) return;
+
+    // Abrir modal
+    openBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        titleInput.focus();
+    });
+
+    // Cerrar modal
+    const closeModal = () => {
+        modal.classList.remove('active');
+        // Opcional: limpiar campos al cerrar
+        // titleInput.value = '';
+        // messageInput.value = '';
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Cerrar al hacer clic fuera
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Cerrar con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Enviar sugerencia
+    sendBtn.addEventListener('click', () => {
+        const title = titleInput.value.trim();
+        const message = messageInput.value.trim();
+
+        if (!title || !message) {
+            mostrarNotificacion('Por favor completa ambos campos', 'error');
+            return;
+        }
+
+        const subject = `Sugerencia Extractor: ${title}`;
+        const body = message;
+
+        // Construir mailto
+        const mailtoLink = `mailto:notion.medufro@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        window.location.href = mailtoLink;
+
+        mostrarNotificacion('Abriendo cliente de correo...', 'success');
+        closeModal();
+    });
+}
+
+// Inicializar sistema de sugerencias cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    initSuggestionModal();
+});

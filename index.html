@@ -1,39 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extractor de Laboratorio HIS</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' stroke='currentColor'><path d='M11.79 12 7 8.855m14-2.903L7 15.145M8 6.92c0 1.337-1.12 2.42-2.5 2.42S3 8.256 3 6.919C3 5.583 4.12 4.5 5.5 4.5S8 5.583 8 6.92m0 10.162c0-1.336-1.12-2.42-2.5-2.42S3 15.745 3 17.081 4.12 19.5 5.5 19.5 8 18.417 8 17.08m13 .968-6.066-3.983'/></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' stroke='currentColor'><path d='M11.79 12 7 8.855m14-2.903L7 15.145M8 6.92c0 1.337-1.12 2.42-2.5 2.42S3 8.256 3 6.919C3 5.583 4.12 4.5 5.5 4.5S8 5.583 8 6.92m0 10.162c0-1.336-1.12-2.42-2.5-2.42S3 15.745 3 17.081 4.12 19.5 5.5 19.5 8 18.417 8 17.08m13 .968-6.066-3.983'/></svg>">
     <!-- Patrones y extractores simplificados (editables) -->
     <script src="patterns.js"></script>
     <script src="extractors.js"></script>
 </head>
+
 <body>
     <div class="container">
         <header class="header">
             <div class="header-content">
                 <div class="header-top">
-                    <h1><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" style="vertical-align: middle; margin-right: 8px;"><path d='M11.79 12 7 8.855m14-2.903L7 15.145M8 6.92c0 1.337-1.12 2.42-2.5 2.42S3 8.256 3 6.919C3 5.583 4.12 4.5 5.5 4.5S8 5.583 8 6.92m0 10.162c0-1.336-1.12-2.42-2.5-2.42S3 15.745 3 17.081 4.12 19.5 5.5 19.5 8 18.417 8 17.08m13 .968-6.066-3.983'/></svg> Extractor de Valores de Laboratorio HIS</h1>
-                    <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
-                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="5"/>
-                            <line x1="12" y1="1" x2="12" y2="3"/>
-                            <line x1="12" y1="21" x2="12" y2="23"/>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                            <line x1="1" y1="12" x2="3" y2="12"/>
-                            <line x1="21" y1="12" x2="23" y2="12"/>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                        </svg>
-                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                        </svg>
-                    </button>
+                    <h1><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor"
+                            style="vertical-align: middle; margin-right: 8px;">
+                            <path
+                                d='M11.79 12 7 8.855m14-2.903L7 15.145M8 6.92c0 1.337-1.12 2.42-2.5 2.42S3 8.256 3 6.919C3 5.583 4.12 4.5 5.5 4.5S8 5.583 8 6.92m0 10.162c0-1.336-1.12-2.42-2.5-2.42S3 15.745 3 17.081 4.12 19.5 5.5 19.5 8 18.417 8 17.08m13 .968-6.066-3.983' />
+                        </svg> Extractor de Laboratorio</h1>
+
+                    <div class="header-actions">
+                        <button id="suggestionBtn" class="header-icon-btn" title="Enviar sugerencia">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                </path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </button>
+                        <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
+                            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                            </svg>
+                            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <p class="subtitle">Herramienta diseñada para extraer de manera automática datos concretos de los exámenes de HIS. En lugar de interpretar el contenido, emplea únicamente operaciones de recorte y reordenamiento de texto basadas en expresiones regulares, sin almacenar ni conservar historial de información privada.</p>
+                <p class="subtitle">Herramienta diseñada para extraer de manera automática datos concretos de los
+                    exámenes de HIS. En lugar de interpretar el contenido, emplea únicamente operaciones de recorte y
+                    reordenamiento de texto basadas en expresiones regulares, sin almacenar ni conservar historial de
+                    información privada.</p>
             </div>
         </header>
 
@@ -41,9 +68,12 @@
             <div class="step-card">
                 <div class="header-with-fecha">
                     <h2>
-                        <svg class="params-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d='M3 9v10.4c0 .56 0 .84.109 1.054a1 1 0 0 0 .437.437C3.76 21 4.04 21 4.598 21H15m-8-7.2V6.2c0-1.12 0-1.68.218-2.108.192-.377.497-.682.874-.874C8.52 3 9.08 3 10.2 3h7.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C21 4.52 21 5.08 21 6.2v7.6c0 1.12 0 1.68-.218 2.108a2.001 2.001 0 0 1-.874.874c-.428.218-.986.218-2.104.218h-7.607c-1.118 0-1.678 0-2.105-.218a2 2 0 0 1-.874-.874C7 15.48 7 14.92 7 13.8'/>
-                            <path d='m11.6 10.323 1.379 1.575a.299.299 0 0 0 .466-.022L16.245 8'/>
+                        <svg class="params-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                            viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path
+                                d='M3 9v10.4c0 .56 0 .84.109 1.054a1 1 0 0 0 .437.437C3.76 21 4.04 21 4.598 21H15m-8-7.2V6.2c0-1.12 0-1.68.218-2.108.192-.377.497-.682.874-.874C8.52 3 9.08 3 10.2 3h7.6c1.12 0 1.68 0 2.108.218a2 2 0 0 1 .874.874C21 4.52 21 5.08 21 6.2v7.6c0 1.12 0 1.68-.218 2.108a2.001 2.001 0 0 1-.874.874c-.428.218-.986.218-2.104.218h-7.607c-1.118 0-1.678 0-2.105-.218a2 2 0 0 1-.874-.874C7 15.48 7 14.92 7 13.8' />
+                            <path d='m11.6 10.323 1.379 1.575a.299.299 0 0 0 .466-.022L16.245 8' />
                         </svg>
                         Parámetros a extraer
                     </h2>
@@ -52,22 +82,41 @@
                             <button id="selectAllBtn" class="utility-button-inline">Todo</button>
                             <button id="clearAllBtn" class="utility-button-inline">Borrar</button>
                         </div>
-                        <label class="fecha-toggle">
-                            <input type="checkbox" value="Fecha" class="selection-checkbox">
-                            <span class="checkmark-compact"></span>
-                            <span class="selection-label-compact">Fecha</span>
-                        </label>
+                        <div class="fecha-control-wrapper">
+                            <label class="fecha-toggle">
+                                <input type="checkbox" value="Fecha" class="selection-checkbox">
+                                <span class="checkmark-compact"></span>
+                                <span class="selection-label-compact">Fecha</span>
+                            </label>
+                            <select id="dateFormatSelect" class="date-format-select" title="Formato de fecha">
+                                <option value="dd/mm">dd/mm</option>
+                                <option value="dd/mm/yy">dd/mm/aa</option>
+                                <option value="dd/mm/yyyy" selected>dd/mm/aaaa</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="selection-grid-compact">
-                    <div class="selection-item-with-dropdown">
+                    <div class="selection-item-with-dropdown draggable-item" draggable="true" data-type="Hemograma">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
                         <label class="selection-item-compact hemograma-with-dropdown">
                             <input type="checkbox" value="Hemograma" class="selection-checkbox">
                             <span class="checkmark-compact"></span>
                             <span class="selection-label-compact">Hemograma</span>
-                            <button class="dropdown-toggle-inline" data-target="hemograma-dropdown" aria-label="Mostrar opciones adicionales de hemograma">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <button class="dropdown-toggle-inline" data-target="hemograma-dropdown"
+                                aria-label="Mostrar opciones adicionales de hemograma">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="6,9 12,15 18,9"></polyline>
                                 </svg>
                             </button>
@@ -102,12 +151,14 @@
                                     <span class="selection-label-compact">RDW</span>
                                 </label>
                                 <label class="dropdown-item">
-                                    <input type="checkbox" value="Reticulocitos" class="selection-checkbox hemograma-extra">
+                                    <input type="checkbox" value="Reticulocitos"
+                                        class="selection-checkbox hemograma-extra">
                                     <span class="checkmark-compact"></span>
                                     <span class="selection-label-compact">Reticulocitos</span>
                                 </label>
                                 <label class="dropdown-item">
-                                    <input type="checkbox" value="Linfocitos" class="selection-checkbox hemograma-extra">
+                                    <input type="checkbox" value="Linfocitos"
+                                        class="selection-checkbox hemograma-extra">
                                     <span class="checkmark-compact"></span>
                                     <span class="selection-label-compact">%Linfocitos</span>
                                 </label>
@@ -124,20 +175,44 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <label class="selection-item-compact">
-                        <input type="checkbox" value="PCR" class="selection-checkbox">
-                        <span class="checkmark-compact"></span>
-                        <span class="selection-label-compact">PCR, Proca & VHS</span>
-                    </label>
-                    
-                    <div class="selection-item-with-dropdown">
+
+                    <div class="selection-wrapper draggable-item" draggable="true" data-type="PCR">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
+                        <label class="selection-item-compact">
+                            <input type="checkbox" value="PCR" class="selection-checkbox">
+                            <span class="checkmark-compact"></span>
+                            <span class="selection-label-compact">PCR, Proca & VHS</span>
+                        </label>
+                    </div>
+
+                    <div class="selection-item-with-dropdown draggable-item" draggable="true" data-type="Renal">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
                         <label class="selection-item-compact renal-with-dropdown">
                             <input type="checkbox" value="Renal" class="selection-checkbox">
                             <span class="checkmark-compact"></span>
                             <span class="selection-label-compact">Renal</span>
-                            <button class="dropdown-toggle-inline" data-target="renal-dropdown" aria-label="Mostrar opciones adicionales de función renal">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <button class="dropdown-toggle-inline" data-target="renal-dropdown"
+                                aria-label="Mostrar opciones adicionales de función renal">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="6,9 12,15 18,9"></polyline>
                                 </svg>
                             </button>
@@ -179,30 +254,147 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <label class="selection-item-compact">
-                        <input type="checkbox" value="Hepático" class="selection-checkbox">
-                        <span class="checkmark-compact"></span>
-                        <span class="selection-label-compact">Hepático</span>
-                    </label>
-                    
-                    <label class="selection-item-compact">
-                        <input type="checkbox" value="Coagulación" class="selection-checkbox">
-                        <span class="checkmark-compact"></span>
-                        <span class="selection-label-compact">Coagulación</span>
-                    </label>
-                    
-                    <label class="selection-item-compact">
-                        <input type="checkbox" value="Nutricional" class="selection-checkbox">
-                        <span class="checkmark-compact"></span>
-                        <span class="selection-label-compact">Nutricional</span>
-                    </label>
-                    
-                    <label class="selection-item-compact">
-                        <input type="checkbox" value="Gases" class="selection-checkbox">
-                        <span class="checkmark-compact"></span>
-                        <span class="selection-label-compact">Gases</span>
-                    </label>
+
+                    <div class="selection-wrapper draggable-item" draggable="true" data-type="Hepático">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
+                        <label class="selection-item-compact">
+                            <input type="checkbox" value="Hepático" class="selection-checkbox">
+                            <span class="checkmark-compact"></span>
+                            <span class="selection-label-compact">Hepático</span>
+                        </label>
+                    </div>
+
+                    <div class="selection-wrapper draggable-item" draggable="true" data-type="Coagulación">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
+                        <label class="selection-item-compact">
+                            <input type="checkbox" value="Coagulación" class="selection-checkbox">
+                            <span class="checkmark-compact"></span>
+                            <span class="selection-label-compact">Coagulación</span>
+                        </label>
+                    </div>
+
+                    <div class="selection-item-with-dropdown draggable-item" draggable="true" data-type="Nutricional">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
+                        <label class="selection-item-compact nutricional-with-dropdown">
+                            <input type="checkbox" value="Nutricional" class="selection-checkbox">
+                            <span class="checkmark-compact"></span>
+                            <span class="selection-label-compact">Nutricional</span>
+                            <button class="dropdown-toggle-inline" data-target="nutricional-dropdown"
+                                aria-label="Mostrar opciones adicionales de nutricional">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6,9 12,15 18,9"></polyline>
+                                </svg>
+                            </button>
+                        </label>
+                        <div id="nutricional-dropdown" class="dropdown-content">
+                            <div class="dropdown-header-compact">
+                                <span>Lípidos y otros</span>
+                                <div class="dropdown-actions">
+                                    <button class="btn-xs" id="selectAllNutricionalBtn"
+                                        title="Seleccionar todo">Todo</button>
+                                    <button class="btn-xs" id="clearAllNutricionalBtn"
+                                        title="Borrar selección">Borrar</button>
+                                </div>
+                            </div>
+                            <div class="dropdown-grid">
+                                <label class="dropdown-item">
+                                    <input type="checkbox" value="PreAlb" class="selection-checkbox nutricional-extra">
+                                    <span class="checkmark-compact"></span>
+                                    <span class="selection-label-compact">PreAlb</span>
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" value="ColT" class="selection-checkbox nutricional-extra">
+                                    <span class="checkmark-compact"></span>
+                                    <span class="selection-label-compact">ColT</span>
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" value="LDL" class="selection-checkbox nutricional-extra">
+                                    <span class="checkmark-compact"></span>
+                                    <span class="selection-label-compact">LDL</span>
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" value="HDL" class="selection-checkbox nutricional-extra">
+                                    <span class="checkmark-compact"></span>
+                                    <span class="selection-label-compact">HDL</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="selection-wrapper draggable-item" draggable="true" data-type="Gases">
+                        <span class="drag-handle" title="Arrastrar para reordenar">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="9" cy="5" r="2" />
+                                <circle cx="15" cy="5" r="2" />
+                                <circle cx="9" cy="12" r="2" />
+                                <circle cx="15" cy="12" r="2" />
+                                <circle cx="9" cy="19" r="2" />
+                                <circle cx="15" cy="19" r="2" />
+                            </svg>
+                        </span>
+                        <label class="selection-item-compact">
+                            <input type="checkbox" value="Gases" class="selection-checkbox">
+                            <span class="checkmark-compact"></span>
+                            <span class="selection-label-compact">Gases</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Opciones de Formato -->
+                <div class="format-options-section">
+                    <div class="format-options-header">
+                        <span class="format-options-title">⚙️ Formato de salida</span>
+                        <div class="format-options-grid">
+                            <label class="format-toggle" title="Etiquetar hemoglobina como Hb">
+                                <input type="checkbox" id="usarHb" checked>
+                                <span class="format-toggle-slider"></span>
+                                <span class="format-toggle-label">Hb/Hg</span>
+                            </label>
+                            <label class="format-toggle" title="Convertir todo a MAYÚSCULAS">
+                                <input type="checkbox" id="usarMayusculas">
+                                <span class="format-toggle-slider"></span>
+                                <span class="format-toggle-label">MAYÚSCULAS</span>
+                            </label>
+                            <label class="format-toggle" title="Usar dos puntos como separador (: vs nada)">
+                                <input type="checkbox" id="usarDosPuntos" checked>
+                                <span class="format-toggle-slider"></span>
+                                <span class="format-toggle-label">Dos puntos (:)</span>
+                            </label>
+                            <label class="format-toggle" title="Separar secciones con saltos de línea">
+                                <input type="checkbox" id="usarSaltosLinea" checked>
+                                <span class="format-toggle-slider"></span>
+                                <span class="format-toggle-label">Saltos de línea</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -211,15 +403,20 @@
                     <div class="step-card">
                         <div class="header-with-fecha">
                             <h2>
-                                <svg class="text-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d='M9.478 3H7.25A2.25 2.25 0 0 0 5 5.25v13.5A2.25 2.25 0 0 0 7.25 21h9a2.25 2.25 0 0 0 2.25-2.25V12M9.478 3c1.243 0 2.272 1.007 2.272 2.25V7.5A2.25 2.25 0 0 0 14 9.75h2.25A2.25 2.25 0 0 1 18.5 12M9.478 3c3.69 0 9.022 5.36 9.022 9M9 16.5h6m-6-3h4'/>
+                                <svg class="text-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d='M9.478 3H7.25A2.25 2.25 0 0 0 5 5.25v13.5A2.25 2.25 0 0 0 7.25 21h9a2.25 2.25 0 0 0 2.25-2.25V12M9.478 3c1.243 0 2.272 1.007 2.272 2.25V7.5A2.25 2.25 0 0 0 14 9.75h2.25A2.25 2.25 0 0 1 18.5 12M9.478 3c3.69 0 9.022 5.36 9.022 9M9 16.5h6m-6-3h4' />
                                 </svg>
                                 Textos de Exámenes
                             </h2>
                             <div class="header-controls">
                                 <div class="utility-buttons-inline">
                                     <button id="addNewExamBtn" class="utility-button-inline add-exam-btn">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
                                             <line x1="12" y1="5" x2="12" y2="19"></line>
                                             <line x1="5" y1="12" x2="19" y2="12"></line>
                                         </svg>
@@ -235,20 +432,28 @@
                                     <span class="exam-title">Examen #1</span>
                                     <div class="exam-controls">
                                         <button class="exam-paste-btn" title="Pegar texto">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
                                                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                                <path
+                                                    d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2">
+                                                </path>
                                             </svg>
                                         </button>
                                         <button class="exam-clear-btn" title="Limpiar texto">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
                                                 <path d="M3 6h18"></path>
                                                 <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
                                                 <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
                                             </svg>
                                         </button>
                                         <button class="exam-remove-btn" title="Eliminar examen" style="display: none;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
                                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                                             </svg>
@@ -257,7 +462,7 @@
                                 </div>
                                 <div class="exam-input">
                                     <textarea class="exam-textarea" id="copyPasteText"
-                                            placeholder="1. En la página pdf del examen presiona: Ctrl + A para seleccionar todo el texto&#10;2. Copia el texto mediante: Ctrl + C&#10;3. Pega el texto aquí mediante: Ctrl + V"></textarea>
+                                        placeholder="1. En la página pdf del examen presiona: Ctrl + A para seleccionar todo el texto&#10;2. Copia el texto mediante: Ctrl + C&#10;3. Pega el texto aquí mediante: Ctrl + V"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -267,25 +472,29 @@
                 <div class="right-column">
                     <div class="step-card results-card">
                         <h2>
-                            <svg class="result-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d='M4.077 3c2.81 2.202 4.406 4.157 4.785 5.866.38 1.709.436 3.336.172 4.88H4L12.214 21 20 13.747h-4.784C15.192 10.89 14.12 8.46 12 6.46S7.239 3.307 4.077 3'/>
+                            <svg class="result-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d='M4.077 3c2.81 2.202 4.406 4.157 4.785 5.866.38 1.709.436 3.336.172 4.88H4L12.214 21 20 13.747h-4.784C15.192 10.89 14.12 8.46 12 6.46S7.239 3.307 4.077 3' />
                             </svg>
                             Resultado Extraído
                         </h2>
-                        
+
                         <!-- Pestañas -->
                         <div class="tabs-container">
                             <div class="tabs-header">
                                 <button class="tab-button active" data-tab="lista">📋 Lista</button>
                                 <button class="tab-button" data-tab="tabla">📊 Tabla Comparativa</button>
                             </div>
-                            
+
                             <!-- Contenido de pestañas -->
                             <div class="tabs-content">
                                 <!-- Pestaña Lista -->
                                 <div class="tab-content active" id="tab-lista">
                                     <div class="results-status" id="resultsStatus">
-                                        <p class="status-text">Selecciona parámetros y pega el texto para ver los resultados automáticamente</p>
+                                        <p class="status-text">Selecciona parámetros y pega el texto para ver los
+                                            resultados automáticamente</p>
                                     </div>
                                     <div id="results" class="results-content"></div>
                                     <div class="copy-area" id="copyArea" style="display: none;">
@@ -303,11 +512,12 @@
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Pestaña Tabla Comparativa -->
                                 <div class="tab-content" id="tab-tabla">
                                     <div class="comparative-table-container">
-                                        <p class="status-text">Selecciona parámetros y pega el texto para ver la tabla comparativa automáticamente</p>
+                                        <p class="status-text">Selecciona parámetros y pega el texto para ver la tabla
+                                            comparativa automáticamente</p>
                                     </div>
                                     <div class="table-actions" id="tableActions" style="display: none;">
                                         <button id="downloadImageBtn" class="copy-button">
@@ -330,19 +540,51 @@
 
     <!-- Footer -->
     <footer style="text-align: center; margin-top: 8px; margin-bottom: 16px; padding-bottom: 12px;">
-        <img id="footerIcon" src="rapido-pulgoso-icon.png" alt="Rápido & Pulgoso" style="width:40px; vertical-align: middle; cursor: pointer; filter: brightness(0) invert(1);" title="Así como que rápido no sé...">
-        <span style="margin-left: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-weight: 300; letter-spacing: 3px; color: white; font-size: 14px; text-transform: uppercase; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);">rápido & pulgoso inc. 2025</span>
+        <img id="footerIcon" src="rapido-pulgoso-icon.png" alt="Rápido & Pulgoso"
+            style="width:40px; vertical-align: middle; cursor: pointer; filter: brightness(0) invert(1);"
+            title="Así como que rápido no sé...">
+        <span
+            style="margin-left: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-weight: 300; letter-spacing: 3px; color: white; font-size: 14px; text-transform: uppercase; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);">rápido
+            & pulgoso inc. 2025</span>
         <div class="warning-box">
-            <p class="warning-text">Esta herramienta no sustituye la revisión detallada, completa y crítica de los exámenes: debe utilizarse solo con el fin de agilizar la extracción y presentación de datos.</p>
+            <p class="warning-text">Esta herramienta no sustituye la revisión detallada, completa y crítica de los
+                exámenes: debe utilizarse solo con el fin de agilizar la extracción y presentación de datos.</p>
         </div>
     </footer>
 
+    <!-- Modal de Sugerencias -->
+    <div id="suggestionModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Envíanos una sugerencia</h2>
+                <button id="closeModalBtn" class="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="suggestionTitle">Título de la sugerencia</label>
+                    <input type="text" id="suggestionTitle" placeholder="Ej: Agregar nuevo parámetro..."
+                        autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="suggestionMessage">Detalle</label>
+                    <textarea id="suggestionMessage"
+                        placeholder="Describe tu sugerencia o el problema que encontraste..." rows="5"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelSuggestionBtn" class="utility-button">Cancelar</button>
+                <button id="sendSuggestionBtn" class="primary-button">Enviar Sugerencia</button>
+            </div>
+        </div>
+    </div>
+
     <div id="notification" class="notification"></div>
-    
+
     <!-- HTML2Canvas para convertir tabla a imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- jsPDF para generar PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>

@@ -1,3 +1,5 @@
+@import url('https://fonts.cdnfonts.com/css/sansation');
+
 /* Variables CSS para temas */
 :root {
     /* Modo claro (por defecto) */
@@ -11,30 +13,30 @@
     --bg-dropdown: rgba(255, 255, 255, 0.98);
     --bg-table-header: rgba(248, 250, 252, 0.9);
     --bg-table-row-hover: rgba(248, 250, 255, 0.8);
-    
+
     --text-primary: #1a1a1a;
     --text-secondary: #374151;
     --text-tertiary: #6b7280;
     --text-muted: #9ca3af;
     --text-label: #495057;
     --text-error: #991b1b;
-    
+
     --border-primary: rgba(229, 231, 235, 0.6);
     --border-secondary: rgba(209, 213, 219, 0.6);
     --border-hover: rgba(59, 130, 246, 0.8);
     --border-focus: #3b82f6;
-    
+
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.15);
     --shadow-dropdown: 0 8px 32px rgba(0, 0, 0, 0.2);
-    
+
     --accent-primary: #667eea;
     --accent-secondary: #3b82f6;
     --accent-success: #28a745;
     --accent-error: #ef4444;
     --accent-warning: #f59e0b;
-    
+
     --bg-body-image: url('https://images.unsplash.com/photo-1565210579809-6b057c557420?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
 }
 
@@ -50,30 +52,30 @@
     --bg-dropdown: rgba(31, 41, 55, 0.98);
     --bg-table-header: rgba(17, 24, 39, 0.9);
     --bg-table-row-hover: rgba(59, 130, 246, 0.1);
-    
+
     --text-primary: #f9fafb;
     --text-secondary: #e5e7eb;
     --text-tertiary: #d1d5db;
     --text-muted: #9ca3af;
     --text-label: #d1d5db;
     --text-error: #fca5a5;
-    
+
     --border-primary: rgba(75, 85, 99, 0.6);
     --border-secondary: rgba(55, 65, 81, 0.6);
     --border-hover: rgba(59, 130, 246, 0.8);
     --border-focus: #60a5fa;
-    
+
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.4);
     --shadow-dropdown: 0 8px 32px rgba(0, 0, 0, 0.5);
-    
+
     --accent-primary: #818cf8;
     --accent-secondary: #60a5fa;
     --accent-success: #34d399;
     --accent-error: #f87171;
     --accent-warning: #fbbf24;
-    
+
     --bg-body-image: url('https://images.unsplash.com/photo-1565210579809-6b057c557420?q=80&w=1742&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
 }
 
@@ -136,9 +138,10 @@ html {
 
 .header-top {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 12px;
+    position: relative;
 }
 
 .header h1 {
@@ -146,9 +149,13 @@ html {
     margin-bottom: 0;
     color: var(--text-primary);
     font-weight: 300;
-    letter-spacing: 4px;
+    letter-spacing: 12px;
+    /* Aumentado considerablemente para ocupar ancho */
     text-transform: uppercase;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Sansation', sans-serif;
+    text-align: center;
+    width: 100%;
+    display: block;
     line-height: 1.2;
     transition: color 0.3s ease;
 }
@@ -165,7 +172,19 @@ html {
     transform: translateY(-10px);
 }
 
-/* Theme Toggle Button */
+/* Header Actions Container */
+.header-actions {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Header Icon Button (shared style with theme toggle logic) */
+.header-icon-btn,
 .theme-toggle {
     background: var(--bg-button);
     border: 1px solid var(--border-primary);
@@ -178,10 +197,16 @@ html {
     justify-content: center;
     width: 40px;
     height: 40px;
-    position: relative;
     backdrop-filter: blur(8px);
+    color: var(--text-secondary);
+    position: relative;
+    /* Reset absolute positioning from previous theme-toggle */
+    transform: none;
+    /* Reset transform */
+    right: auto;
 }
 
+.header-icon-btn:hover,
 .theme-toggle:hover {
     background: var(--bg-button-hover);
     border-color: var(--border-hover);
@@ -189,6 +214,135 @@ html {
     box-shadow: var(--shadow-md);
 }
 
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-primary);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    max-height: 90vh;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.close-modal-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.close-modal-btn:hover {
+    color: var(--text-error);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.primary-button {
+    background: var(--accent-secondary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.primary-button:hover {
+    background: #2563eb;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Theme Toggle styles adjustments inside shared block above */
 .theme-toggle svg {
     color: var(--text-secondary);
     transition: all 0.3s ease;
@@ -219,7 +373,7 @@ html {
     transform: translate(-50%, -50%) rotate(0deg);
 }
 
-.header h1:hover + .subtitle,
+.header h1:hover+.subtitle,
 .header:hover .subtitle {
     max-height: 200px;
     opacity: 1;
@@ -363,9 +517,12 @@ html {
 
 /* Animación sutil para el icono */
 @keyframes gentle-glow {
-    0%, 100% {
+
+    0%,
+    100% {
         filter: drop-shadow(0 0 8px rgba(78, 128, 238, 0.4));
     }
+
     50% {
         filter: drop-shadow(0 0 12px rgba(78, 128, 238, 0.6));
     }
@@ -537,12 +694,12 @@ html {
     flex-shrink: 0;
 }
 
-.selection-checkbox:checked + .checkmark {
+.selection-checkbox:checked+.checkmark {
     background: #667eea;
     border-color: #667eea;
 }
 
-.selection-checkbox:checked + .checkmark::after {
+.selection-checkbox:checked+.checkmark::after {
     content: '✓';
     position: absolute;
     left: 50%;
@@ -553,7 +710,7 @@ html {
     font-size: 14px;
 }
 
-.selection-checkbox:checked ~ .selection-label {
+.selection-checkbox:checked~.selection-label {
     color: #667eea;
     font-weight: 600;
 }
@@ -589,11 +746,7 @@ html {
     position: relative;
 }
 
-body.dropdown-open .selection-item-with-dropdown {
-}
 
-body.dropdown-open .selection-item-compact {
-}
 
 
 
@@ -614,12 +767,12 @@ body.dropdown-open .selection-item-compact {
     flex-shrink: 0;
 }
 
-.selection-checkbox:checked + .checkmark-compact {
+.selection-checkbox:checked+.checkmark-compact {
     background: #3b82f6;
     border-color: #3b82f6;
 }
 
-.selection-checkbox:checked + .checkmark-compact::after {
+.selection-checkbox:checked+.checkmark-compact::after {
     content: '✓';
     position: absolute;
     left: 50%;
@@ -630,7 +783,7 @@ body.dropdown-open .selection-item-compact {
     font-size: 11px;
 }
 
-.selection-checkbox:checked ~ .selection-label-compact {
+.selection-checkbox:checked~.selection-label-compact {
     color: #3b82f6;
     font-weight: 500;
 }
@@ -969,61 +1122,63 @@ body.dropdown-open .selection-item-compact {
     .two-column-layout .right-column {
         order: 1;
     }
+
     .two-column-layout .left-column {
         order: 2;
     }
-    
+
     .header h1 {
         font-size: 1.5rem;
     }
-    
+
     .parametros {
         padding: 15px;
     }
-    
+
     .selection-grid-compact {
         grid-template-columns: 1fr;
     }
-    
+
     .utility-buttons {
         flex-direction: column;
         gap: 10px;
         width: 100%;
     }
-    
+
     .btn-compact {
         flex: none;
         width: 100%;
     }
-    
+
     .action-buttons,
     .results-actions {
         flex-direction: column;
         align-items: center;
         width: 100%;
     }
-    
+
     .btn {
         width: 100%;
         max-width: 100%;
     }
-    
+
     .features {
         flex-direction: column;
         align-items: center;
     }
+
     .selection-item {
         text-align: center;
     }
-    
+
     .step-card {
         padding: 15px;
     }
-    
+
     .header {
         padding: 20px 15px;
     }
-    
+
     #copyPasteText {
         font-size: 0.85rem;
         min-height: 200px;
@@ -1045,15 +1200,15 @@ body.dropdown-open .selection-item-compact {
     .step-card {
         padding: 20px;
     }
-    
+
     .header {
         padding: 25px 15px;
     }
-    
+
     .selection-grid-compact {
         grid-template-columns: 1fr;
     }
-    
+
     #copyPasteText {
         font-size: 0.85rem;
         min-height: 250px;
@@ -1239,12 +1394,12 @@ body.dropdown-open .selection-item-compact {
     .comparative-table {
         font-size: 0.75rem;
     }
-    
+
     .comparative-table th,
     .comparative-table td {
         padding: 8px 12px;
     }
-    
+
     .comparative-table th:first-child,
     .comparative-table td:first-child {
         min-width: 100px;
@@ -1256,24 +1411,24 @@ body.dropdown-open .selection-item-compact {
         font-size: 0.8rem;
         padding: 10px 12px;
     }
-    
+
     .comparative-table-container {
         padding: 16px;
         min-height: 150px;
         overflow-x: auto;
     }
-    
+
     .comparative-table {
         font-size: 0.7rem;
         min-width: 400px;
     }
-    
+
     .comparative-table th,
     .comparative-table td {
         padding: 6px 8px;
         white-space: nowrap;
     }
-    
+
     .comparative-table th:first-child,
     .comparative-table td:first-child {
         min-width: 80px;
@@ -1281,7 +1436,7 @@ body.dropdown-open .selection-item-compact {
         left: 0;
         background: inherit;
     }
-    
+
     .comparative-table td {
         font-size: 0.65rem;
     }
@@ -1303,7 +1458,7 @@ body.dropdown-open .selection-item-compact {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .table-actions .copy-button {
         width: 100%;
         max-width: 300px;
@@ -1410,6 +1565,7 @@ footer {
         opacity: 0;
         transform: translateX(-50%) translateY(4px);
     }
+
     to {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
@@ -1508,15 +1664,16 @@ footer {
 
 /* Alinear texto a la izquierda y el toggle a la derecha sin romper el ellipsis */
 .selection-item-with-dropdown .selection-label-compact {
-  flex: 1;
-  min-width: 0; /* necesario para que text-overflow: ellipsis funcione en flex */
-  text-align: left;
+    flex: 1;
+    min-width: 0;
+    /* necesario para que text-overflow: ellipsis funcione en flex */
+    text-align: left;
 }
 
 /* Forzar ancho uniforme de botones en el grid compacto */
 .selection-grid-compact .selection-item-with-dropdown,
 .selection-grid-compact .selection-item-compact {
-  width: 100%;
+    width: 100%;
 }
 
 /* Asegurar que el grid no corte los dropdowns */
@@ -1607,6 +1764,7 @@ footer {
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1645,7 +1803,7 @@ footer {
     .dropdown-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .dropdown-content {
         position: fixed;
         left: 10px;
@@ -1655,11 +1813,11 @@ footer {
         max-height: 50vh;
         overflow-y: auto;
     }
-    
+
     .selection-item-with-dropdown {
         grid-column: span 1;
     }
-    
+
     .selection-grid-compact {
         grid-template-columns: 1fr 1fr;
     }
@@ -1827,18 +1985,275 @@ footer {
     .exams-container {
         max-height: 300px;
     }
-    
+
     .exam-textarea {
         min-height: 100px;
         font-size: 12px;
     }
-    
+
     .exam-header {
         padding: 8px 10px;
     }
-    
+
     .exam-title {
         font-size: 13px;
     }
 }
 
+/* =========================================
+   ESTILOS DRAG & DROP
+   ========================================= */
+
+/* Estilo unificado para el contenedor (Wrapper simple y con Dropdown) */
+.selection-wrapper,
+.selection-item-with-dropdown {
+    display: flex;
+    align-items: stretch;
+    /* Asegura que hijos llenen altura, incluyendo handle */
+    background-color: var(--bg-secondary);
+    /* o bg-input */
+    border: 1px solid var(--border-primary);
+    border-radius: 5px;
+    padding: 0;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    /* Importante para el dropdown absolute */
+    min-height: 38px;
+    /* Altura mínima consistente */
+    box-sizing: border-box;
+    /* Asegurar modelo de caja */
+}
+
+.selection-wrapper:hover,
+.selection-item-with-dropdown:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: var(--border-hover);
+}
+
+/* El drag handle */
+.drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    /* Un poco más ancho para click fácil */
+    min-width: 28px;
+    padding: 0;
+    cursor: grab;
+    color: var(--text-tertiary);
+    opacity: 0.6;
+    transition: all 0.2s;
+    border-right: 1px solid transparent;
+    border-radius: 5px 0 0 5px;
+    background-color: rgba(0, 0, 0, 0.02);
+    /* Sutil fondo */
+}
+
+.drag-handle:hover {
+    opacity: 1;
+    color: var(--text-primary);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Resetear estilos del hijo (.selection-item-compact) cuando está dentro de un wrapper/dropdown */
+.selection-wrapper .selection-item-compact,
+.selection-item-with-dropdown .selection-item-compact {
+    flex: 1;
+    border: none !important;
+    /* Forzar override */
+    background: transparent !important;
+    border-radius: 0 5px 5px 0;
+    margin: 0;
+    min-height: auto;
+    /* Dejar que el flex container decida */
+    display: flex;
+    align-items: center;
+}
+
+/* Ajuste específico para cuando hay dropdown items: asegurar alineación */
+.hemograma-with-dropdown,
+.renal-with-dropdown,
+.nutricional-with-dropdown {
+    width: 100%;
+    justify-content: space-between;
+}
+
+/* Estilos de draggable genérico */
+.draggable-item {
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.draggable-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+/* SVG del handle */
+.drag-handle svg {
+    pointer-events: none;
+    /* Que el click pase al span */
+}
+
+.selection-grid-compact {
+    display: grid;
+    /* El resto de propiedades grid se heredan */
+}
+
+
+/* =========================================
+   ESTILOS NUEVA SECCIÓN DE FORMATO
+   ========================================= */
+.format-options-section {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.format-options-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.format-options-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.format-options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+/* Estilos para toggles de formato */
+.format-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    user-select: none;
+}
+
+.format-toggle input {
+    display: none;
+}
+
+.format-toggle-slider {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background-color: #cbd5e1;
+    /* Gris claro inactivo */
+    border-radius: 20px;
+    margin-right: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.format-toggle-slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.format-toggle input:checked+.format-toggle-slider {
+    background-color: #2563eb;
+    /* Azul intenso */
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    /* Glow sutil */
+}
+
+.format-toggle input:checked+.format-toggle-slider::before {
+    transform: translateX(16px);
+}
+
+.format-toggle-label {
+    color: var(--text-tertiary);
+    transition: color 0.2s;
+}
+
+.format-toggle input:checked~.format-toggle-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Selector de Fecha Minimalista */
+.fecha-control-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.date-format-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background-color: transparent;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    text-align: right;
+    font-weight: 500;
+}
+
+.date-format-select:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    /* Sutil hover */
+    color: var(--text-primary);
+}
+
+.date-format-select:focus {
+    outline: none;
+    background-color: var(--bg-button);
+    border-color: var(--border-primary);
+}
+
+/* Opción selected más oscura */
+.date-format-select option {
+    color: black;
+}
+
+.format-toggle input[type="checkbox"]:checked~.format-toggle-label {
+    color: var(--text-secondary);
+}
+
+/* Hover effects */
+.format-toggle:hover .format-toggle-slider {
+    background: var(--border-primary);
+}
+
+.format-toggle:hover input[type="checkbox"]:checked+.format-toggle-slider {
+    background: var(--accent-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .format-options-grid {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
