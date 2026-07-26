@@ -328,14 +328,121 @@ const CHOLCHOL_PATTERNS = {
     }
 };
 
+// ==========================================
+// EXTRACTOR HOSPITAL DE PUERTO CISNES
+// ==========================================
+const PUERTO_CISNES_PATTERNS = {
+    modelo: 'PuertoCisnes',
+
+    hemograma: {
+        hemoglobina: /\bHEMOGLOBINA\s*(\d+(?:[.,]\d+)?)\s*g\/dl/i,
+        hematocrito: /\bHEMATOCRITO\s*(\d+(?:[.,]\d+)?)\s*%/i,
+        leucocitos: /(?:^|\n)\s*LEUCOCITOS\s*(\d+(?:[.,]\d+)?)\s*10\^3\/ul/i,
+        neutrofilos_porcentaje: /%\s*SEGMENTADOS\s*(\d+(?:[.,]\d+)?)\s*%/i,
+        linfocitos_porcentaje: /%\s*LINFOCITOS\s*(\d+(?:[.,]\d+)?)\s*%/i,
+        plaquetas: /\bRECUENTO\s+DE\s+PLAQUETAS\s*(\d+(?:[.,]\d+)?)\s*10\^3\/ul/i,
+        vcm: /(?:^|\n)\s*VCM\s*(\d+(?:[.,]\d+)?)\s*fl/i,
+        chcm: /(?:^|\n)\s*CHCM\s*(\d+(?:[.,]\d+)?)\s*g\/dl/i,
+        rdw: /(?:^|\n)\s*RDW\s*(\d+(?:[.,]\d+)?)\s*%/i,
+        reticulocitos: SIN_COINCIDENCIA,
+        neutrofilos_absoluto: SIN_COINCIDENCIA,
+        linfocitos_absoluto: SIN_COINCIDENCIA
+    },
+
+    renal: {
+        creatinina: /\bCREATININA\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        vfg: SIN_COINCIDENCIA,
+        bun: /(?:^|\n)\s*BUN\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        urea: /(?:^|\n)\s*UREA\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        sodio: /(?:^|\n)\s*SODIO\s*(\d+(?:[.,]\d+)?)\s*mmol\/l/i,
+        potasio: /(?:^|\n)\s*POTASIO\s*(\d+(?:[.,]\d+)?)\s*mmol\/l/i,
+        cloro: /(?:^|\n)\s*CLORO\s*(\d+(?:[.,]\d+)?)\s*mmol\/l/i,
+        glucosa: /(?:^|\n)\s*GLUCOSA\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        fosforo: SIN_COINCIDENCIA,
+        calcio: SIN_COINCIDENCIA,
+        magnesio: SIN_COINCIDENCIA,
+        acido_urico: SIN_COINCIDENCIA,
+        rac: SIN_COINCIDENCIA
+    },
+
+    hepatico: {
+        bilirrubina_total: /\bBILIRRUBINA\s+TOTAL\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        bilirrubina_directa: /\bBILIRRUBINA\s+DIRECTA\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        got_asat: /(?:^|\n)\s*G\.?\s*O\.?\s*T\.?\s*:\s*(\d+(?:[.,]\d+)?)\s*UI\/l/i,
+        gpt_alt: /(?:^|\n)\s*G\.?\s*P\.?\s*T\.?\s*:\s*(\d+(?:[.,]\d+)?)\s*UI\/l/i,
+        fosfatasa_alcalina: /\bFOSFATASA\s+ALCALINA\s*:\s*(\d+(?:[.,]\d+)?)\s*UI\/l/i,
+        ggt: /(?:^|\n)\s*GGT\s*:?\s*(\d+(?:[.,]\d+)?)\s*UI\/l/i,
+        amilasa: SIN_COINCIDENCIA,
+        lipasa: SIN_COINCIDENCIA
+    },
+
+    nutricional: {
+        proteinas: SIN_COINCIDENCIA,
+        albumina: /\bALBUMINA\s*:\s*(\d+(?:[.,]\d+)?)\s*g\/dl/i,
+        prealbumin: SIN_COINCIDENCIA,
+        colesterol_total: /\bCOLESTEROL\s+TOTAL\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        ldl: /\bCOLESTEROL\s+LDL\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        hdl: /\bCOLESTEROL\s+HDL\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        trigliceridos: /\bTRIGLICERIDOS\s*:\s*(\d+(?:[.,]\d+)?)\s*mg\/dl/i,
+        hba1c: SIN_COINCIDENCIA
+    },
+
+    pcr: {
+        pcr: SIN_COINCIDENCIA,
+        procalcitonina: SIN_COINCIDENCIA,
+        vhs: /\bVHS\s*:\s*(\d+(?:[.,]\d+)?)\s*mm\/hora/i
+    },
+
+    coagulacion: {
+        inr: SIN_COINCIDENCIA,
+        tiempo_protrombina: SIN_COINCIDENCIA,
+        porcentaje_tp: SIN_COINCIDENCIA,
+        ttpa: SIN_COINCIDENCIA
+    },
+
+    cardiacos: {
+        troponina: SIN_COINCIDENCIA,
+        dimero_d: SIN_COINCIDENCIA,
+        probnp: SIN_COINCIDENCIA
+    },
+
+    hormonas: {
+        bhcg: SIN_COINCIDENCIA,
+        tsh: SIN_COINCIDENCIA,
+        t4l: SIN_COINCIDENCIA
+    },
+
+    gases: {
+        ph: SIN_COINCIDENCIA,
+        pco2: SIN_COINCIDENCIA,
+        po2: SIN_COINCIDENCIA,
+        hco3: SIN_COINCIDENCIA,
+        beb: SIN_COINCIDENCIA,
+        lactato: SIN_COINCIDENCIA,
+        saturacion_o2: SIN_COINCIDENCIA
+    },
+
+    fechas: {
+        patrones: [
+            /\bF\.\s*Toma\s+de\s+Muestra\s*:\s*(\d{2}[/-]\d{2}[/-]\d{4})/i,
+            /\bFecha\s+de\s+Validación\s*:?\s*(\d{2}[/-]\d{2}[/-]\d{4})/i,
+            /\bF\.\s*Impresión\s*:\s*(\d{2}[/-]\d{2}[/-]\d{4})/i
+        ]
+    }
+};
+
 
 // Inicialización global
 window.EXTRACTION_PATTERNS = HHHA_PATTERNS;
 
 function setExtractionModel(modelo) {
-    window.EXTRACTION_PATTERNS = modelo === 'Cholchol'
-        ? CHOLCHOL_PATTERNS
-        : HHHA_PATTERNS;
+    if (modelo === 'Cholchol') {
+        window.EXTRACTION_PATTERNS = CHOLCHOL_PATTERNS;
+    } else if (modelo === 'PuertoCisnes') {
+        window.EXTRACTION_PATTERNS = PUERTO_CISNES_PATTERNS;
+    } else {
+        window.EXTRACTION_PATTERNS = HHHA_PATTERNS;
+    }
 }
 
 // Función para buscar con múltiples patrones (común a ambas versiones)

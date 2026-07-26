@@ -474,6 +474,7 @@ function agregarNuevoExamen() {
                         aria-label="Modelo del examen ${examId}" title="Elegir modelo para este examen">
                     <option value="HHHA">HHHA | HINI</option>
                     <option value="Cholchol">Cholchol</option>
+                    <option value="PuertoCisnes">Puerto Cisnes</option>
                 </select>
                 <button class="exam-paste-btn" title="Pegar texto">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
