@@ -2227,22 +2227,52 @@ footer {
    ========================================= */
 .creator-message {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 52px;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 0;
     margin-top: 15px;
-    padding: 12px 14px;
+    margin-left: auto;
+    padding: 8px 10px;
+    box-sizing: border-box;
     border: 1px solid var(--border-primary);
     border-radius: 10px;
     background: var(--bg-card);
     box-shadow: var(--shadow-sm);
     color: var(--text-secondary);
     font-size: 0.82rem;
+    transition: width 0.3s ease, gap 0.3s ease;
+}
+
+.creator-message[hidden] {
+    display: none;
+}
+
+.creator-message.is-open {
+    width: 100%;
+    gap: 10px;
 }
 
 .creator-message p {
-    flex: 1;
+    width: 0;
+    max-width: 0;
+    max-height: 0;
+    flex: 0 1 auto;
     margin: 0;
+    overflow: hidden;
+    opacity: 0;
     line-height: 1.45;
+    transition: max-width 0.3s ease, max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.creator-message.is-open p {
+    width: auto;
+    max-width: 100%;
+    max-height: 120px;
+    flex: 1;
+    opacity: 1;
 }
 
 .creator-message strong {
@@ -2252,8 +2282,13 @@ footer {
 .creator-contact-actions {
     display: flex;
     align-items: center;
+    align-self: flex-end;
     flex-shrink: 0;
     gap: 6px;
+}
+
+.creator-contact-toggle {
+    order: 2;
 }
 
 .creator-contact-toggle,
@@ -2282,14 +2317,16 @@ footer {
 }
 
 .creator-contact-toggle svg {
+    transform: rotate(180deg);
     transition: transform 0.25s ease;
 }
 
 .creator-contact-toggle[aria-expanded="true"] svg {
-    transform: rotate(180deg);
+    transform: rotate(0deg);
 }
 
 .creator-contact-options {
+    order: 1;
     display: flex;
     max-width: 0;
     gap: 6px;
@@ -2314,7 +2351,7 @@ footer {
 }
 
 @media (max-width: 768px) {
-    .creator-message {
+    .creator-message.is-open {
         align-items: flex-start;
         flex-direction: column;
     }

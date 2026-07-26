@@ -1918,13 +1918,17 @@ function initializeGasesDropdown() {
 function initCreatorContact() {
     const toggle = document.getElementById('creatorContactToggle');
     const options = document.getElementById('creatorContactOptions');
+    const message = document.getElementById('creatorMessageText');
+    const container = toggle?.closest('.creator-message');
 
-    if (!toggle || !options) return;
+    if (!toggle || !options || !message || !container) return;
 
     toggle.addEventListener('click', () => {
         const isOpen = toggle.getAttribute('aria-expanded') === 'true';
         toggle.setAttribute('aria-expanded', String(!isOpen));
+        message.setAttribute('aria-hidden', String(isOpen));
         options.setAttribute('aria-hidden', String(isOpen));
+        container.classList.toggle('is-open', !isOpen);
         options.classList.toggle('show', !isOpen);
     });
 }

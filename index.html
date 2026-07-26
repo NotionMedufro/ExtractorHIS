@@ -565,16 +565,16 @@
             </div>
         </main>
 
-        <section class="creator-message" aria-label="Contacto">
-            <p>
+        <section class="creator-message" aria-label="Contacto" hidden>
+            <p id="creatorMessageText" aria-hidden="true">
                 Hola gente 👋🏻. Estoy actualizando el extractor con respecto al formato actual de los exámenes. Si
                 quieres ayudarme, sugerir o pedir algo (como agregar exámenes o formatos de otros centros de salud),
-                puedes contactarme con el botón de la derecha
+                puedes contactarme con las opciones de la derecha
             </p>
             <div class="creator-contact-actions">
                 <button id="creatorContactToggle" class="creator-contact-toggle" type="button"
-                    aria-expanded="false" aria-controls="creatorContactOptions"
-                    title="Mostrar opciones de contacto">
+                    aria-expanded="false" aria-controls="creatorMessageText creatorContactOptions"
+                    title="Mostrar mensaje y opciones de contacto">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9,18 15,12 9,6"></polyline>
