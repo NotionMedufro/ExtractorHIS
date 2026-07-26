@@ -470,6 +470,11 @@ function agregarNuevoExamen() {
         <div class="exam-header">
             <span class="exam-title">Examen #${examId}</span>
             <div class="exam-controls">
+                <select class="version-select exam-model-select"
+                        aria-label="Modelo del examen ${examId}" title="Elegir modelo para este examen">
+                    <option value="HHHA">HHHA | HINI</option>
+                    <option value="Cholchol">Cholchol</option>
+                </select>
                 <button class="exam-paste-btn" title="Pegar texto">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
@@ -513,7 +518,6 @@ function agregarNuevoExamen() {
     // Registrar el nuevo examen
     currentExams.set(examId, '');
 
-    mostrarNotificacion(`Examen #${examId} agregado`, 'success');
 }
 
 // Función para configurar event listeners de un examen
@@ -522,6 +526,15 @@ function setupExamEventListeners(examItem, examId) {
     const pasteBtn = examItem.querySelector('.exam-paste-btn');
     const clearBtn = examItem.querySelector('.exam-clear-btn');
     const removeBtn = examItem.querySelector('.exam-remove-btn');
+    const modelSelect = examItem.querySelector('.exam-model-select');
+
+    if (modelSelect) {
+        modelSelect.value = 'HHHA';
+
+        modelSelect.addEventListener('change', function () {
+            extraerAutomaticamente();
+        });
+    }
 
     // Event listener para cambios en el textarea
     let extractTimeout;
@@ -642,10 +655,112 @@ function obtenerTextosExamenes() {
     const textosExamenes = [];
     currentExams.forEach((texto, examId) => {
         if (texto.trim()) {
-            textosExamenes.push({ id: examId, texto });
+            const examItem = document.querySelector(`.exam-item[data-exam-id="${examId}"]`);
+            const modelSelect = examItem?.querySelector('.exam-model-select');
+            textosExamenes.push({
+                id: examId,
+                texto,
+                modelo: modelSelect?.value || 'HHHA'
+            });
         }
     });
     return textosExamenes;
+}
+
+function dividirElementosResultado(linea) {
+    const elementos = [];
+    let actual = '';
+    let profundidad = 0;
+
+    for (const caracter of linea) {
+        if (caracter === '(') profundidad++;
+        if (caracter === ')') profundidad = Math.max(0, profundidad - 1);
+
+        if (caracter === ',' && profundidad === 0) {
+            if (actual.trim()) elementos.push(actual.trim());
+            actual = '';
+        } else {
+            actual += caracter;
+        }
+    }
+
+    if (actual.trim()) elementos.push(actual.trim());
+    return elementos;
+}
+
+function categoriaDeElemento(elemento, categoriaAnterior = 'otros') {
+    const categorias = [
+        ['hemograma', /^(?:Hb(?:\/Hcto)?|Hg(?:\/Hcto)?|Hcto|VCM|CHCM|RDW|GB|Plaq|PCR|Proca|VHS)\b/i],
+        ['renal', /^(?:Crea|BUN|Urea|ELP|Ca|P|Mg|A\.?Ur|RAC)\b/i],
+        ['hepatico', /^(?:BiliT\/D|BiliT|BiliD|GOT\/GPT|GOT|GPT|FA|GGT|Amil|Lip)\b/i],
+        ['coagulacion', /^(?:INR|TTPa)\b/i],
+        ['nutricional', /^(?:HbA1c|HB1Ac|Glic|ColT|LDL|HDL|TGC|Prot|Alb|PreAlb)\b/i],
+        ['cardiacos', /^(?:Tropo|DD|ProBNP)\b/i],
+        ['hormonas', /^(?:TSH|T4L|T4|BHCG)\b/i],
+        ['gases', /^(?:GSA|GSV|ph|pCO2|pO2|HCO3|BEB|Á\.Lac)\b/i]
+    ];
+
+    const encontrada = categorias.find(([, patron]) => patron.test(elemento));
+    return encontrada ? encontrada[0] : categoriaAnterior;
+}
+
+function claveDeElemento(elemento) {
+    const conDosPuntos = elemento.match(/^([^:]+):/);
+    if (conDosPuntos) return conDosPuntos[1].trim().toLowerCase();
+    return elemento.trim().split(/\s+/)[0].toLowerCase();
+}
+
+function combinarResultadosMismaFecha(resultados) {
+    if (resultados.length < 2) return null;
+
+    const resultadosSeparados = resultados.map(({ resultado }) =>
+        resultado.split(/\u2028|\n/).map(linea => linea.trim()).filter(Boolean)
+    );
+    const fechas = resultadosSeparados.map(lineas =>
+        lineas[0]?.match(/^(\d{2}\/\d{2}(?:\/\d{2}|\/\d{4})?):$/)?.[1] || null
+    );
+
+    if (!fechas[0] || fechas.some(fecha => fecha !== fechas[0])) return null;
+
+    const ordenCategorias = [
+        'hemograma', 'renal', 'hepatico', 'coagulacion',
+        'nutricional', 'hormonas', 'cardiacos', 'gases', 'otros'
+    ];
+    const categorias = new Map(ordenCategorias.map(categoria => [categoria, new Map()]));
+
+    resultadosSeparados.forEach(lineas => {
+        lineas.slice(1).forEach(linea => {
+            let categoriaActual = categoriaDeElemento(linea);
+            dividirElementosResultado(linea).forEach(elemento => {
+                categoriaActual = categoriaDeElemento(elemento, categoriaActual);
+                const elementosCategoria = categorias.get(categoriaActual) || categorias.get('otros');
+                const clave = claveDeElemento(elemento);
+                if (!elementosCategoria.has(clave)) {
+                    elementosCategoria.set(clave, elemento);
+                }
+            });
+        });
+    });
+
+    const ordenNutricional = ['hba1c', 'hb1ac', 'glic', 'colt', 'ldl', 'hdl', 'tgc', 'prot', 'alb', 'prealb'];
+    const lineasCombinadas = [`${fechas[0]}:`];
+
+    ordenCategorias.forEach(categoria => {
+        const elementos = categorias.get(categoria);
+        if (!elementos || elementos.size === 0) return;
+
+        let valores = [...elementos.entries()];
+        if (categoria === 'nutricional') {
+            valores.sort(([claveA], [claveB]) => {
+                const posicionA = ordenNutricional.indexOf(claveA);
+                const posicionB = ordenNutricional.indexOf(claveB);
+                return (posicionA < 0 ? 999 : posicionA) - (posicionB < 0 ? 999 : posicionB);
+            });
+        }
+        lineasCombinadas.push(valores.map(([, valor]) => valor).join(', '));
+    });
+
+    return lineasCombinadas.join('\u2028');
 }
 
 // ===== FUNCIONES DE INTERFAZ =====
@@ -671,6 +786,7 @@ function extraerAutomaticamente() {
 
     try {
         let resultadosFinales = [];
+        let resultadosProcesados = [];
 
         // Aplicar opciones de formato al extractor
         const opcionesFormato = obtenerOpcionesFormato();
@@ -678,6 +794,8 @@ function extraerAutomaticamente() {
 
         // Procesar cada examen
         textosExamenes.forEach(examen => {
+            setExtractionModel(examen.modelo);
+
             // Caso especial: "Tal cual"
             if (opcionesSeleccionadas.includes('Talcual')) {
                 resultadosFinales.push(`=== EXAMEN #${examen.id} ===\n${examen.texto}`);
@@ -688,6 +806,7 @@ function extraerAutomaticamente() {
             const resultado = extractor.procesar(examen.texto, opcionesSeleccionadas);
 
             if (resultado && resultado.trim()) {
+                resultadosProcesados.push({ id: examen.id, resultado });
                 // Agregar encabezado del examen si hay múltiples exámenes
                 if (textosExamenes.length > 1) {
                     resultadosFinales.push(`=== EXAMEN #${examen.id} ===\n${resultado}`);
@@ -700,6 +819,11 @@ function extraerAutomaticamente() {
                 }
             }
         });
+
+        const resultadoCombinado = combinarResultadosMismaFecha(resultadosProcesados);
+        if (resultadoCombinado) {
+            resultadosFinales = [resultadoCombinado];
+        }
 
         if (resultadosFinales.length > 0) {
             const resultadoFinal = resultadosFinales.join('\n\n');
@@ -717,6 +841,28 @@ function extraerAutomaticamente() {
 function obtenerOpcionesSeleccionadas() {
     const checkboxes = document.querySelectorAll('.selection-checkbox:checked');
     return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function aplicarOrdenPredeterminadoParametros() {
+    const contenedor = document.querySelector('.selection-grid-compact');
+    if (!contenedor) return;
+
+    const orden = [
+        'Hemograma',
+        'PCR',
+        'Renal',
+        'Hepático',
+        'Coagulación',
+        'Nutricional',
+        'Hormonas',
+        'MarcCV',
+        'Gases'
+    ];
+
+    orden.forEach(tipo => {
+        const elemento = contenedor.querySelector(`[data-type="${tipo}"]`);
+        if (elemento) contenedor.appendChild(elemento);
+    });
 }
 
 // Función para obtener opciones de formato
@@ -767,6 +913,16 @@ function cargarOpcionesFormato() {
     }
 }
 
+function actualizarEstadoSelectorFecha() {
+    const incluirFecha = document.getElementById('incluirFecha');
+    const dateFormatSelect = document.getElementById('dateFormatSelect');
+
+    if (!incluirFecha || !dateFormatSelect) return;
+
+    dateFormatSelect.disabled = !incluirFecha.checked;
+    dateFormatSelect.setAttribute('aria-disabled', String(!incluirFecha.checked));
+}
+
 // Función para inicializar listeners de opciones de formato
 function inicializarOpcionesFormato() {
     const formatToggles = ['usarDosPuntos', 'usarMayusculas', 'usarSaltosLinea', 'usarHb'];
@@ -789,8 +945,15 @@ function inicializarOpcionesFormato() {
             extraerAutomaticamente();
         });
     }
+
+    const incluirFecha = document.getElementById('incluirFecha');
+    if (incluirFecha) {
+        incluirFecha.addEventListener('change', actualizarEstadoSelectorFecha);
+    }
+
     // Cargar opciones guardadas
     cargarOpcionesFormato();
+    actualizarEstadoSelectorFecha();
 }
 
 // Inicializar Drag & Drop
@@ -850,25 +1013,18 @@ function inicializarDragAndDrop() {
 }
 
 // Helper para Drag & Drop
-function getDragAfterElement(container, y, x) {
+function getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('.draggable-item:not(.dragging)')];
 
     return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
-        // Distancia simple basada en centros, podría mejorarse para grid preciso
-        const offsetX = x - (box.left + box.width / 2);
-        const offsetY = y - (box.top + box.height / 2);
-        const dist = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+        const offset = y - box.top - box.height / 2;
 
-        // Simplemente devolver el más cercano en distancia euclidiana
-        // O usar lógica tradicional Y-axis si fuera lista vertical
-
-        if (closest == null || dist < closest.dist) {
-            return { offset: dist, element: child, dist: dist };
-        } else {
-            return closest;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
         }
-    }, null).element;
+        return closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
 }
 
 // Función para mostrar estado
@@ -1102,6 +1258,7 @@ function seleccionarTodo() {
             cb.checked = true;
         }
     });
+    actualizarEstadoSelectorFecha();
     extraerAutomaticamente();
     mostrarNotificacion('Todos los parámetros seleccionados', 'info');
 }
@@ -1109,6 +1266,7 @@ function seleccionarTodo() {
 // Función para limpiar selección
 function limpiarSeleccion() {
     document.querySelectorAll('.selection-checkbox').forEach(cb => cb.checked = false);
+    actualizarEstadoSelectorFecha();
     extraerAutomaticamente();
     mostrarNotificacion('Selección borrada', 'info');
 }
@@ -1186,23 +1344,6 @@ function initializeThemeToggle() {
 function applyTheme(theme) {
     const html = document.documentElement;
     html.setAttribute('data-theme', theme);
-
-    // Listener para selector de versión
-    const versionSelector = document.getElementById('versionSelector');
-    if (versionSelector) {
-        versionSelector.addEventListener('change', function () {
-            if (window.setExtractionVersion) {
-                window.setExtractionVersion(this.value);
-                extraerAutomaticamente(); // Re-procesar inmediatamente
-                mostrarNotificacion(`Cambiado a extractor ${this.options[this.selectedIndex].text}`, 'info');
-            }
-        });
-    }
-
-    // Inicializar con la versión por defecto (asegurar coincidencia UI y lógica)
-    if (window.setExtractionVersion && versionSelector) {
-        window.setExtractionVersion(versionSelector.value);
-    }
 }
 
 function updateThemeColor(theme) {
@@ -1225,13 +1366,14 @@ function updateThemeColor(theme) {
 
 // ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', function () {
+    aplicarOrdenPredeterminadoParametros();
+
     const copyPasteTextarea = document.getElementById('copyPasteText');
     const selectAllBtn = document.getElementById('selectAllBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const copyBtn = document.getElementById('copyBtn');
     const copyHtmlBtn = document.getElementById('copyHtmlBtn');
     const copySummernoteBtn = document.getElementById('copySummernoteBtn');
-
     // Event listeners para extracción automática
     document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', extraerAutomaticamente);
@@ -1282,18 +1424,6 @@ document.addEventListener('DOMContentLoaded', function () {
         clearTextBtn.addEventListener('click', limpiarTexto);
     }
 
-    // Botones de descarga de tabla
-    const downloadImageBtn = document.getElementById('downloadImageBtn');
-    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-
-    if (downloadImageBtn) {
-        downloadImageBtn.addEventListener('click', descargarTablaComoImagen);
-    }
-
-    if (downloadPdfBtn) {
-        downloadPdfBtn.addEventListener('click', descargarTablaComoPDF);
-    }
-
     // Atajos de teclado
     document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
@@ -1302,27 +1432,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 limpiarSeleccion();
             }
         }
-    });
-
-    // Funcionalidad de pestañas
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const targetTab = this.getAttribute('data-tab');
-
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-
-            this.classList.add('active');
-            document.getElementById(`tab-${targetTab}`).classList.add('active');
-
-            // Si se selecciona la pestaña tabla, generar tabla comparativa
-            if (targetTab === 'tabla') {
-                generarTablaComparativa();
-            }
-        });
     });
 
     // Activación automática para "Lisis Tumoral"
@@ -1356,15 +1465,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Selección por defecto al iniciar: marca todas las casillas fuera de submenús
     document.querySelectorAll('.selection-checkbox').forEach(cb => {
+        const renalExtraPorDefecto = cb.value === 'Magnesio' || cb.value === 'AcidoUrico';
         if (
             cb.value !== 'Talcual' &&
             !cb.classList.contains('hemograma-extra') &&
-            !cb.classList.contains('renal-extra') &&
-            !cb.classList.contains('hepatico-extra')
+            (!cb.classList.contains('renal-extra') || renalExtraPorDefecto) &&
+            !cb.classList.contains('hepatico-extra') &&
+            !cb.classList.contains('gases-extra')
         ) {
             cb.checked = true;
         }
     });
+    actualizarEstadoSelectorFecha();
 
     // Ejecutar extracción inicial
     extraerAutomaticamente();
@@ -1374,6 +1486,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Inicializar funcionalidad del desplegable de renal
     initializeRenalDropdown();
+
+    // Inicializar funcionalidad del desplegable de gases
+    initializeGasesDropdown();
 
     // ===== INICIALIZACIÓN DE MÚLTIPLES EXÁMENES =====
     // Botones de gestión de exámenes
@@ -1412,158 +1527,6 @@ function descargarComoTexto(contenido, nombreArchivo = 'extraccion-medica.txt') 
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-}
-
-// Lista de parámetros para tabla comparativa en orden específico
-const PARAMETROS_TABLA = [
-    { nombre: 'Leucocitos (10³/uL)', patron: PATRONES_EXTRACCION.leucocitos, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: '% Neutrófilos', patron: PATRONES_EXTRACCION.neutrofilos, formato: (v) => Math.round(parseFloat(v)).toString() },
-    { nombre: 'RAN', patron: PATRONES_EXTRACCION.neutrofilos_abs, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'RAL', patron: PATRONES_EXTRACCION.linfocitos_abs, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Hematocrito (%)', patron: PATRONES_EXTRACCION.hematocrito_pct, formato: (v) => Math.round(parseFloat(v)).toString() },
-    { nombre: 'Hemoglobina (g/dL)', patron: PATRONES_EXTRACCION.hemoglobina, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Plaquetas (10³/uL)', patron: PATRONES_EXTRACCION.plaquetas, formato: (v) => parseInt(v).toString() },
-    { nombre: 'VHS', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'PCR', patron: PATRONES_EXTRACCION.pcr, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'PT (%)', patron: PATRONES_EXTRACCION.tp_pct, formato: (v) => Math.round(parseFloat(v)).toString() },
-    { nombre: 'INR', patron: PATRONES_EXTRACCION.inr_val, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'TTPA', patron: PATRONES_EXTRACCION.ttpa_seg, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Glicemia', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'Uremia (mg/dL)', patron: PATRONES_EXTRACCION.urea, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'BUN (mg%)', patron: PATRONES_EXTRACCION.bun, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Creatinina (mg/dL)', patron: PATRONES_EXTRACCION.creatinina, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'VFG (mL/min)', patron: PATRONES_EXTRACCION.vfg, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Sodio (mEq/L)', patron: PATRONES_EXTRACCION.sodio, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Potasio (mEq/L)', patron: PATRONES_EXTRACCION.potasio, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Cloro (mEq/L)', patron: PATRONES_EXTRACCION.cloro, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Calcio (mg/dL)', patron: PATRONES_EXTRACCION.calcio, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Fósforo (mg/dL)', patron: PATRONES_EXTRACCION.fosforo, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Magnesio (mg/dL)', patron: PATRONES_EXTRACCION.magnesio, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Albúmina (g/dL)', patron: /ALBUMINA\s\D*(\d+\.?\d*)\s*g\/dL/i, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Prealbúmina', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'Proteínas', patron: /PROTEINAS\s+TOTALES\s\D*(\d+\.?\d*)\s*g\/dL/i, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Bilirrubina Total', patron: PATRONES_EXTRACCION.bilirrubina_total, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Bilirrubina Directa', patron: PATRONES_EXTRACCION.bilirrubina_directa, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'Fosfatasa Alcalina', patron: PATRONES_EXTRACCION.fosfatasa_alcalina, formato: (v) => Math.round(parseFloat(v)).toString() },
-    { nombre: 'GGT', patron: PATRONES_EXTRACCION.ggt, formato: (v) => parseFloat(v.replace(',', '.')).toFixed(1) },
-    { nombre: 'GOT', patron: PATRONES_EXTRACCION.got, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'GPT', patron: PATRONES_EXTRACCION.gpt, formato: (v) => parseFloat(v).toFixed(1) },
-    { nombre: 'Amilasa', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'Lipasa', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'Ácido Úrico (mg/dL)', patron: PATRONES_EXTRACCION.acido_urico, formato: (v) => parseFloat(v).toFixed(2) },
-    { nombre: 'LDH', patron: PATRONES_EXTRACCION.ldh, formato: (v) => Math.round(parseFloat(v)).toString() },
-    { nombre: 'CK Total', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'CK MB', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'Troponina', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'PO2 (mmHg)', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'PCO2 (mmHg)', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'HCO3 (mmol/L)', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'pH', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'BE (mmol/L)', patron: null, formato: (v) => v }, // No hay patrón definido
-    { nombre: 'SatO2 (%)', patron: null, formato: (v) => v } // No hay patrón definido
-];
-
-// Función para generar tabla comparativa
-function generarTablaComparativa() {
-    const textoExamen = document.getElementById('copyPasteText').value.trim();
-    const tableContainer = document.querySelector('.comparative-table-container');
-    const tableActions = document.getElementById('tableActions');
-
-    if (!textoExamen) {
-        tableContainer.innerHTML = '<p class="status-text">Pega el texto del reporte médico para generar la tabla comparativa</p>';
-        tableActions.style.display = 'none';
-        return;
-    }
-
-    // Crear tabla HTML
-    let tableHTML = `
-        <table class="comparative-table">
-            <thead>
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    let valoresEncontrados = 0;
-
-    // Procesar cada parámetro en orden
-    PARAMETROS_TABLA.forEach(parametro => {
-        let valor = '-';
-
-        if (parametro.patron) {
-            const match = textoExamen.match(parametro.patron);
-            if (match && match[1]) {
-                try {
-                    valor = parametro.formato(match[1]);
-                    valoresEncontrados++;
-                } catch (e) {
-                    console.warn(`Error formateando ${parametro.nombre}:`, e);
-                    valor = match[1]; // Usar valor sin formatear si hay error
-                }
-            }
-        }
-
-        tableHTML += `
-            <tr>
-                <td>${parametro.nombre}</td>
-                <td>${valor}</td>
-            </tr>
-        `;
-    });
-
-    tableHTML += `
-            </tbody>
-        </table>
-    `;
-
-    // Mostrar tabla o mensaje de estado
-    if (valoresEncontrados > 0) {
-        tableContainer.innerHTML = tableHTML;
-        tableActions.style.display = 'flex';
-    } else {
-        tableContainer.innerHTML = '<p class="status-text">No se encontraron valores para mostrar en la tabla</p>';
-        tableActions.style.display = 'none';
-    }
-}
-
-// Función para descargar tabla como imagen (requiere html2canvas)
-function descargarTablaComoImagen() {
-    const tableContainer = document.querySelector('.comparative-table-container');
-    const table = tableContainer.querySelector('.comparative-table');
-
-    if (!table) {
-        mostrarNotificacion('No hay tabla para descargar', 'error');
-        return;
-    }
-
-    // Verificar si html2canvas está disponible
-    if (typeof html2canvas === 'undefined') {
-        mostrarNotificacion('html2canvas no está disponible', 'error');
-        return;
-    }
-
-    html2canvas(table, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: true
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `tabla-comparativa-${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL('image/png');
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        mostrarNotificacion('Tabla descargada como imagen', 'success');
-    }).catch(error => {
-        console.error('Error al generar imagen:', error);
-        mostrarNotificacion('Error al generar la imagen', 'error');
-    });
 }
 
 // Funcionalidad del desplegable de hemograma
@@ -1919,123 +1882,52 @@ function initializeRenalDropdown() {
     console.log('=== DESPLEGABLE DE RENAL Y NUTRICIONAL INICIADO ===');
 }
 
-// Función para descargar tabla como PDF (requiere jsPDF)
-function descargarTablaComoPDF() {
-    const table = document.querySelector('.comparative-table');
+// Funcionalidad del desplegable de gases
+function initializeGasesDropdown() {
+    const dropdownToggle = document.querySelector('.gases-with-dropdown .dropdown-toggle-inline');
+    const dropdownContent = document.getElementById('gases-dropdown');
 
-    if (!table) {
-        mostrarNotificacion('No hay tabla para descargar', 'error');
-        return;
-    }
+    if (!dropdownToggle || !dropdownContent) return;
 
-    // Verificar si jsPDF está disponible
-    if (typeof window.jsPDF === 'undefined') {
-        mostrarNotificacion('jsPDF no está disponible', 'error');
-        return;
-    }
+    dropdownToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-    try {
-        const { jsPDF } = window.jsPDF;
-        const pdf = new jsPDF();
+        const seAbrira = !dropdownContent.classList.contains('show');
 
-        // Título del PDF
-        pdf.setFontSize(16);
-        pdf.text('Tabla Comparativa - Extractor Médico', 20, 20);
-
-        // Obtener datos de la tabla
-        const rows = table.querySelectorAll('tbody tr');
-        let yPosition = 40;
-
-        pdf.setFontSize(12);
-
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 2) {
-                const parametro = cells[0].textContent.trim();
-                const valor = cells[1].textContent.trim();
-
-                // Solo incluir filas con valores (no "-")
-                if (valor !== '-') {
-                    pdf.text(`${parametro}: ${valor}`, 20, yPosition);
-                    yPosition += 8;
-
-                    // Nueva página si es necesario
-                    if (yPosition > 280) {
-                        pdf.addPage();
-                        yPosition = 20;
-                    }
-                }
-            }
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+            dropdown.classList.remove('show');
+        });
+        document.querySelectorAll('.dropdown-toggle-inline svg').forEach(chevron => {
+            chevron.style.transform = 'rotate(0deg)';
         });
 
-        // Descargar PDF
-        pdf.save(`tabla-comparativa-${new Date().toISOString().split('T')[0]}.pdf`);
-        mostrarNotificacion('PDF generado correctamente', 'success');
+        if (seAbrira) {
+            dropdownContent.classList.add('show');
+            const chevron = this.querySelector('svg');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
 
-    } catch (error) {
-        console.error('Error al generar PDF:', error);
-        mostrarNotificacion('Error al generar el PDF', 'error');
-    }
-}
-// ===== SISTEMA DE SUGERENCIAS =====
-function initSuggestionModal() {
-    const modal = document.getElementById('suggestionModal');
-    const openBtn = document.getElementById('suggestionBtn');
-    const closeBtn = document.getElementById('closeModalBtn');
-    const closeBtnFooter = document.getElementById('closeModalBtnFooter');
-    const copyEmailBtn = document.getElementById('copyEmailBtn');
-
-    if (!modal || !openBtn) return;
-
-    // Abrir modal
-    openBtn.addEventListener('click', () => {
-        modal.classList.add('active');
-    });
-
-    // Cerrar modal
-    const closeModal = () => {
-        modal.classList.remove('active');
-    };
-
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (closeBtnFooter) closeBtnFooter.addEventListener('click', closeModal);
-
-    // Cerrar al hacer clic fuera
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
+            const parentStepCard = dropdownContent.closest('.step-card');
+            if (parentStepCard) parentStepCard.classList.add('dropdown-parent-active');
         }
     });
-
-    // Cerrar con ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closeModal();
-        }
-    });
-
-    // Copiar correo
-    if (copyEmailBtn) {
-        copyEmailBtn.addEventListener('click', () => {
-            const email = 'notion.medufro@gmail.com';
-            navigator.clipboard.writeText(email).then(() => {
-                mostrarNotificacion('Correo copiado al portapapeles', 'success');
-
-                // Feedback visual en el botón
-                const originalIcon = copyEmailBtn.innerHTML;
-                copyEmailBtn.innerHTML = '<span class="btn-icon">✅</span>';
-                setTimeout(() => {
-                    copyEmailBtn.innerHTML = originalIcon;
-                }, 2000);
-            }).catch(err => {
-                console.error('Error al copiar:', err);
-                mostrarNotificacion('Error al copiar correo', 'error');
-            });
-        });
-    }
 }
 
-// Inicializar sistema de sugerencias cuando el DOM esté listo
+
+function initCreatorContact() {
+    const toggle = document.getElementById('creatorContactToggle');
+    const options = document.getElementById('creatorContactOptions');
+
+    if (!toggle || !options) return;
+
+    toggle.addEventListener('click', () => {
+        const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!isOpen));
+        options.setAttribute('aria-hidden', String(isOpen));
+        options.classList.toggle('show', !isOpen);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    initSuggestionModal();
+    initCreatorContact();
 });

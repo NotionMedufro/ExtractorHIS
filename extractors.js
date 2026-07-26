@@ -54,109 +54,134 @@ class SimpleExtractor {
     extraerHemograma(opcionesSeleccionadas = []) {
         let resultados = [];
 
-        // 1. HEMOGLOBINA
-        // 1. HEMOGLOBINA
         const hb = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.hemoglobina);
-        if (hb) {
-            const hbFormateado = parseFloat(hb).toFixed(1);
-            const hbLabel = (this.formatOptions.usarHb !== false) ? 'Hb' : 'Hg';
-            resultados.push(this.formatearEtiqueta(hbLabel, hbFormateado));
+        const hcto = opcionesSeleccionadas.includes('Hcto')
+            ? extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.hematocrito)
+            : null;
+        const hbLabel = (this.formatOptions.usarHb !== false) ? 'Hb' : 'Hg';
+
+        if (hb && hcto) {
+            resultados.push(
+                this.formatearEtiqueta(
+                    `${hbLabel}/Hcto`,
+                    `${parseFloat(hb).toFixed(1)}/${Math.round(parseFloat(hcto))}`
+                )
+            );
+        } else if (hb) {
+            resultados.push(this.formatearEtiqueta(hbLabel, parseFloat(hb).toFixed(1)));
+        } else if (hcto) {
+            resultados.push(this.formatearEtiqueta('Hcto', Math.round(parseFloat(hcto))));
         }
 
-        // 2. NEUTRÓFILOS % (se usará con GB)
-        const neutrofilos = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.neutrofilos_porcentaje);
-        let neutrofiloPart = '';
-        if (neutrofilos) {
-            const neutRedondeado = Math.round(parseFloat(neutrofilos));
-            const labelN = this.formatOptions.usarMayusculas ? 'N' : 'N';
-            const sepN = this.formatOptions.usarDosPuntos ? ': ' : ' ';
-            neutrofiloPart = ` (${labelN}${sepN}${neutRedondeado}%)`;
+        // Índices eritrocitarios agrupados después de Hb/Hcto.
+        const detallesEritrocitarios = [];
+        const vcm = opcionesSeleccionadas.includes('VCM')
+            ? extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.vcm)
+            : null;
+        const chcm = opcionesSeleccionadas.includes('CHCM')
+            ? extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.chcm)
+            : null;
+
+        if (vcm && chcm) {
+            detallesEritrocitarios.push(
+                this.formatearEtiqueta(
+                    'VCM/CHCM',
+                    `${Math.round(parseFloat(vcm))}/${Math.round(parseFloat(chcm))}`
+                )
+            );
+        } else if (vcm) {
+            detallesEritrocitarios.push(
+                this.formatearEtiqueta('VCM', Math.round(parseFloat(vcm)))
+            );
+        } else if (chcm) {
+            detallesEritrocitarios.push(
+                this.formatearEtiqueta('CHCM', Math.round(parseFloat(chcm)))
+            );
         }
 
-        // 3. LEUCOCITOS (Glóbulos Blancos) + NEUTRÓFILOS
-        const gb = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.leucocitos);
-        if (gb) {
-            const gbFormateado = parseFloat(gb).toFixed(3);
-            resultados.push(this.formatearEtiqueta('GB', gbFormateado) + neutrofiloPart);
-        }
-
-        // 4. PLAQUETAS
-        const plaquetas = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.plaquetas);
-        if (plaquetas) {
-            resultados.push(this.formatearEtiqueta('Plaq', `${plaquetas}.000`));
-        }
-
-        // === PARÁMETROS ADICIONALES DEL SUBMENÚ ===
-
-        // HEMATOCRITO (Hcto)
-        if (opcionesSeleccionadas.includes('Hcto')) {
-            const hcto = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.hematocrito);
-            if (hcto) {
-                const hctoFormateado = Math.round(parseFloat(hcto));
-                resultados.push(this.formatearEtiqueta('Hcto', `${hctoFormateado}%`));
-            }
-        }
-
-        // VCM
-        if (opcionesSeleccionadas.includes('VCM')) {
-            const vcm = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.vcm);
-            if (vcm) {
-                const vcmFormateado = Math.round(parseFloat(vcm));
-                resultados.push(this.formatearEtiqueta('VCM', vcmFormateado));
-            }
-        }
-
-        // CHCM
-        if (opcionesSeleccionadas.includes('CHCM')) {
-            const chcm = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.chcm);
-            if (chcm) {
-                const chcmFormateado = Math.round(parseFloat(chcm));
-                resultados.push(this.formatearEtiqueta('CHCM', chcmFormateado));
-            }
-        }
-
-        // RDW
         if (opcionesSeleccionadas.includes('RDW')) {
             const rdw = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.rdw);
             if (rdw) {
-                const rdwFormateado = Math.round(parseFloat(rdw));
-                resultados.push(this.formatearEtiqueta('RDW', rdwFormateado));
+                detallesEritrocitarios.push(
+                    this.formatearEtiqueta('RDW', Math.round(parseFloat(rdw)))
+                );
             }
         }
 
-        // RETICULOCITOS
         if (opcionesSeleccionadas.includes('Reticulocitos')) {
             const retic = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.reticulocitos);
             if (retic) {
-                resultados.push(this.formatearEtiqueta('Ret', `${retic}%`));
+                detallesEritrocitarios.push(this.formatearEtiqueta('Ret', `${retic}%`));
             }
         }
 
-        // LINFOCITOS %
-        if (opcionesSeleccionadas.includes('Linfocitos')) {
-            const linf = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.linfocitos_porcentaje);
-            if (linf) {
-                const linfFormateado = Math.round(parseFloat(linf));
-                resultados.push(this.formatearEtiqueta('L', `${linfFormateado}%`));
-            }
+        if (detallesEritrocitarios.length > 0) {
+            resultados.push(`(${detallesEritrocitarios.join(', ')})`);
         }
 
-        // RAN (Recuento Absoluto de Neutrófilos)
-        if (opcionesSeleccionadas.includes('RAN')) {
-            const ran = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.neutrofilos_absoluto);
-            if (ran) {
-                const ranFormateado = parseFloat(ran).toFixed(3);
-                resultados.push(this.formatearEtiqueta('RAN', ranFormateado));
+        // Leucocitos y fórmula diferencial en un único bloque.
+        const gb = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.leucocitos);
+        if (gb) {
+            const gbFormateado = parseFloat(gb).toFixed(3);
+            const diferencial = [];
+
+            const neutrofilos = extraerValor(
+                this.texto,
+                EXTRACTION_PATTERNS.hemograma.neutrofilos_porcentaje
+            );
+            if (neutrofilos) {
+                diferencial.push(
+                    this.formatearEtiqueta('N', `${Math.round(parseFloat(neutrofilos))}%`)
+                );
             }
+
+            if (opcionesSeleccionadas.includes('Linfocitos')) {
+                const linf = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.linfocitos_porcentaje);
+                if (linf) {
+                    diferencial.push(
+                        this.formatearEtiqueta('L', `${Math.round(parseFloat(linf))}%`)
+                    );
+                }
+            }
+
+            if (opcionesSeleccionadas.includes('RAN')) {
+                let ran = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.neutrofilos_absoluto);
+                if (!ran && neutrofilos) {
+                    ran = (parseFloat(gb) * parseFloat(neutrofilos) / 100).toString();
+                }
+                if (ran) {
+                    diferencial.push(
+                        this.formatearEtiqueta('RAN', parseFloat(ran).toFixed(3))
+                    );
+                }
+            }
+
+            if (opcionesSeleccionadas.includes('RAL')) {
+                let ral = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.linfocitos_absoluto);
+                const linfocitos = extraerValor(
+                    this.texto,
+                    EXTRACTION_PATTERNS.hemograma.linfocitos_porcentaje
+                );
+                if (!ral && linfocitos) {
+                    ral = (parseFloat(gb) * parseFloat(linfocitos) / 100).toString();
+                }
+                if (ral) {
+                    diferencial.push(
+                        this.formatearEtiqueta('RAL', parseFloat(ral).toFixed(3))
+                    );
+                }
+            }
+
+            let bloqueGB = this.formatearEtiqueta('GB', gbFormateado);
+            if (diferencial.length > 0) {
+                bloqueGB += ` (${diferencial.join(', ')})`;
+            }
+            resultados.push(bloqueGB);
         }
 
-        // RAL (Recuento Absoluto de Linfocitos)
-        if (opcionesSeleccionadas.includes('RAL')) {
-            const ral = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.linfocitos_absoluto);
-            if (ral) {
-                const ralFormateado = parseFloat(ral).toFixed(3);
-                resultados.push(this.formatearEtiqueta('RAL', ralFormateado));
-            }
+        const plaquetas = extraerValor(this.texto, EXTRACTION_PATTERNS.hemograma.plaquetas);
+        if (plaquetas) {
+            resultados.push(this.formatearEtiqueta('Plaq', `${plaquetas}.000`));
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
@@ -186,7 +211,8 @@ class SimpleExtractor {
         // 2. BUN (Nitrógeno Ureico) - siempre incluido
         const bun = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.bun);
         if (bun) {
-            resultados.push(this.formatearEtiqueta('BUN', bun));
+            const bunFormateado = parseFloat(bun).toFixed(1);
+            resultados.push(this.formatearEtiqueta('BUN', bunFormateado));
         }
 
         // 3. UREA (solo si está seleccionada en el submenú)
@@ -210,17 +236,17 @@ class SimpleExtractor {
             resultados.push(this.formatearEtiqueta('ELP', `${naRedondeado}/${kFormateado}/${clRedondeado}`));
         }
 
-        // 5. FÓSFORO (sin redondear)
-        const fosforo = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.fosforo);
-        if (fosforo) {
-            resultados.push(this.formatearEtiqueta('P', fosforo));
-        }
-
-        // 6. CALCIO (1 decimal)
+        // 5. CALCIO (1 decimal)
         const calcio = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.calcio);
         if (calcio) {
             const caFormateado = parseFloat(calcio).toFixed(1);
             resultados.push(this.formatearEtiqueta('Ca', caFormateado));
+        }
+
+        // 6. FÓSFORO (sin redondear)
+        const fosforo = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.fosforo);
+        if (fosforo) {
+            resultados.push(this.formatearEtiqueta('P', fosforo));
         }
 
         // === PARÁMETROS ADICIONALES DEL SUBMENÚ ===
@@ -238,25 +264,42 @@ class SimpleExtractor {
             const acidoUrico = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.acido_urico);
             if (acidoUrico) {
                 const auFormateado = parseFloat(acidoUrico).toFixed(1);
-                resultados.push(this.formatearEtiqueta('Á.Ur', auFormateado));
+                resultados.push(this.formatearEtiqueta('A.Ur', auFormateado));
             }
         }
 
-        // 8. AMILASA (redondear a entero)
-        const amilasa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.amilasa);
-        if (amilasa) {
-            const amilFormateada = Math.round(parseFloat(amilasa));
-            resultados.push(this.formatearEtiqueta('Amil', amilFormateada));
-        }
-
-        // 9. LIPASA (redondear a entero)
-        const lipasa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.lipasa);
-        if (lipasa) {
-            const lipFormateada = Math.round(parseFloat(lipasa));
-            resultados.push(this.formatearEtiqueta('Lip', lipFormateada));
+        // 9. RELACIÓN MICROALBUMINURIA / CREATINURIA
+        const rac = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.rac);
+        if (rac) {
+            const racFormateada = parseFloat(rac).toFixed(1);
+            resultados.push(this.formatearEtiqueta('RAC', racFormateada));
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
+    }
+
+    // ============== EXÁMENES QUÍMICOS ADICIONALES ==============
+    extraerPancreaticos() {
+        let resultados = [];
+
+        const amilasa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.amilasa);
+        if (amilasa) {
+            resultados.push(this.formatearEtiqueta('Amil', Math.round(parseFloat(amilasa))));
+        }
+
+        const lipasa = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.lipasa);
+        if (lipasa) {
+            resultados.push(this.formatearEtiqueta('Lip', Math.round(parseFloat(lipasa))));
+        }
+
+        return resultados.join(', ');
+    }
+
+    extraerGlicemia() {
+        const glicemia = extraerValor(this.texto, EXTRACTION_PATTERNS.renal.glucosa);
+        if (!glicemia) return '';
+
+        return this.formatearEtiqueta('Glic', Math.round(parseFloat(glicemia)));
     }
 
     // ============== EXTRACTOR DE FUNCIÓN HEPÁTICA ==============
@@ -266,10 +309,12 @@ class SimpleExtractor {
         // 1. BILIRRUBINA TOTAL/DIRECTA -> BiliT/D: 0.49/0.38
         const biliT = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.bilirrubina_total);
         const biliD = extraerValor(this.texto, EXTRACTION_PATTERNS.hepatico.bilirrubina_directa);
-        if (biliT || biliD) {
-            const bt = biliT ? biliT : '--';
-            const bd = biliD ? biliD : '--';
-            resultados.push(this.formatearEtiquetaCompuesta('BiliT/D', bt, bd));
+        if (biliT && biliD) {
+            resultados.push(this.formatearEtiquetaCompuesta('BiliT/D', biliT, biliD));
+        } else if (biliT) {
+            resultados.push(this.formatearEtiqueta('BiliT', biliT));
+        } else if (biliD) {
+            resultados.push(this.formatearEtiqueta('BiliD', biliD));
         }
 
         // 2. GOT/GPT (Transaminasas) - sin decimales
@@ -309,10 +354,10 @@ class SimpleExtractor {
     extraerPCR() {
         let resultados = [];
 
-        // 1. PCR (Proteína C Reactiva) - redondear a entero
+        // 1. PCR (Proteína C Reactiva) - conservar decimales significativos
         const pcr = extraerValor(this.texto, EXTRACTION_PATTERNS.pcr.pcr);
         if (pcr) {
-            const pcrFormateada = Math.round(parseFloat(pcr));
+            const pcrFormateada = Number(parseFloat(pcr).toFixed(1)).toString();
             resultados.push(this.formatearEtiqueta('PCR', pcrFormateada));
         }
 
@@ -342,39 +387,45 @@ class SimpleExtractor {
             resultados.push(this.formatearEtiqueta('INR', inrFormateado));
         }
 
-        // 2. TIEMPO DE PROTROMBINA + %TP
-        const pt = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.tiempo_protrombina);
-        const ptPct = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.porcentaje_tp);
-        if (pt) {
-            const ptSeg = Math.round(parseFloat(pt));
-            const pctPart = ptPct ? ` (${Math.round(parseFloat(ptPct))}%)` : '';
-            resultados.push(this.formatearEtiqueta('TP', `${ptSeg}s${pctPart}`));
-        }
-
-        // 3. TTPA
+        // 2. TTPA (1 decimal)
         const ttpa = extraerValor(this.texto, EXTRACTION_PATTERNS.coagulacion.ttpa);
         if (ttpa) {
-            const ttpaFormateado = Math.round(parseFloat(ttpa));
-            resultados.push(this.formatearEtiqueta('TTPa', `${ttpaFormateado}s`));
+            const ttpaFormateado = parseFloat(ttpa).toFixed(1);
+            resultados.push(this.formatearEtiqueta('TTPa', ttpaFormateado));
         }
 
         return this.limpiarAsteriscos(resultados.join(', '));
     }
 
     // ============== EXTRACTOR NUTRICIONAL ==============
-    extraerNutricional(opcionesSeleccionadas = []) {
-        let resultados = [];
+    extraerNutricional(opcionesSeleccionadas = [], agruparHHHA = false) {
+        const resultadosMetabolicos = [];
+        const resultadosProteicos = [];
+        const resultadosLipidicos = [];
+
+        const hba1c = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.hba1c);
+        if (hba1c) {
+            const hba1cFormateada = Number(parseFloat(hba1c).toFixed(1)).toString();
+            resultadosMetabolicos.push(this.formatearEtiqueta('HbA1c', `${hba1cFormateada}%`));
+        }
+
+        if (agruparHHHA) {
+            const glicemia = this.extraerGlicemia();
+            if (glicemia) resultadosMetabolicos.push(glicemia);
+        }
 
         // 1. PROTEÍNAS TOTALES
         const proteinas = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.proteinas);
         if (proteinas) {
-            resultados.push(this.formatearEtiqueta('Prot', proteinas));
+            const proteinasFormateadas = parseFloat(proteinas).toFixed(1);
+            resultadosProteicos.push(this.formatearEtiqueta('Prot', proteinasFormateadas));
         }
 
         // 2. ALBÚMINA
         const albumina = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.albumina);
         if (albumina) {
-            resultados.push(this.formatearEtiqueta('Alb', albumina));
+            const albuminaFormateada = parseFloat(albumina).toFixed(1);
+            resultadosProteicos.push(this.formatearEtiqueta('Alb', albuminaFormateada));
         }
 
         // 3. PREALBÚMINA (hasta 2 decimales)
@@ -384,7 +435,7 @@ class SimpleExtractor {
             const prealbVal = parseFloat(prealbumin);
             // Máximo 2 decimales, pero toString para eliminar ceros innecesarios si es entero
             const prealbFormateado = Number(prealbVal.toFixed(2)).toString();
-            resultados.push(this.formatearEtiqueta('PreAlb', prealbFormateado));
+            resultadosProteicos.push(this.formatearEtiqueta('PreAlb', prealbFormateado));
         }
 
         // 4. COLESTEROL TOTAL (sin decimales)
@@ -392,94 +443,199 @@ class SimpleExtractor {
         const colT = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.colesterol_total);
         if (colT && (opcionesSeleccionadas.includes('ColT') || opcionesSeleccionadas.includes('Nutricional'))) {
             const colTFormateado = Math.round(parseFloat(colT));
-            resultados.push(this.formatearEtiqueta('ColT', colTFormateado));
+            resultadosLipidicos.push(this.formatearEtiqueta('ColT', colTFormateado));
         }
 
         // 5. LDL (sin decimales)
         const ldl = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.ldl);
         if (ldl && (opcionesSeleccionadas.includes('LDL') || opcionesSeleccionadas.includes('Nutricional'))) {
             const ldlFormateado = Math.round(parseFloat(ldl));
-            resultados.push(this.formatearEtiqueta('LDL', ldlFormateado));
+            resultadosLipidicos.push(this.formatearEtiqueta('LDL', ldlFormateado));
         }
 
         // 6. HDL (sin decimales)
         const hdl = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.hdl);
         if (hdl && (opcionesSeleccionadas.includes('HDL') || opcionesSeleccionadas.includes('Nutricional'))) {
             const hdlFormateado = Math.round(parseFloat(hdl));
-            resultados.push(this.formatearEtiqueta('HDL', hdlFormateado));
+            resultadosLipidicos.push(this.formatearEtiqueta('HDL', hdlFormateado));
         }
 
-        return this.limpiarAsteriscos(resultados.join(', '));
+        // 7. TRIGLICÉRIDOS
+        const trigliceridos = extraerValor(this.texto, EXTRACTION_PATTERNS.nutricional.trigliceridos);
+        if (trigliceridos && opcionesSeleccionadas.includes('Nutricional')) {
+            const tgcFormateado = Math.round(parseFloat(trigliceridos));
+            resultadosLipidicos.push(this.formatearEtiqueta('TGC', tgcFormateado));
+        }
+
+        if (agruparHHHA) {
+            return this.limpiarAsteriscos([
+                ...resultadosMetabolicos,
+                ...resultadosLipidicos,
+                ...resultadosProteicos
+            ].join(', '));
+        }
+
+        const bloques = [];
+        if (resultadosMetabolicos.length > 0) {
+            bloques.push(resultadosMetabolicos.join(', '));
+        }
+        if (resultadosProteicos.length > 0) {
+            bloques.push(resultadosProteicos.join(', '));
+        }
+        if (resultadosLipidicos.length > 0) {
+            bloques.push(resultadosLipidicos.join(', '));
+        }
+
+        return this.limpiarAsteriscos(bloques.join(', '));
+    }
+
+    // ============== MARCADORES CARDIACOS ==============
+    extraerCardiacos() {
+        let resultados = [];
+
+        const troponina = extraerValor(this.texto, EXTRACTION_PATTERNS.cardiacos.troponina);
+        if (troponina) {
+            const tropoFormateada = Number(parseFloat(troponina).toFixed(1)).toString();
+            resultados.push(this.formatearEtiqueta('Tropo', tropoFormateada));
+        }
+
+        const dimeroD = extraerValor(this.texto, EXTRACTION_PATTERNS.cardiacos.dimero_d);
+        if (dimeroD) {
+            const ddFormateado = this.formatearValorComparativo(dimeroD);
+            resultados.push(this.formatearEtiqueta('DD', ddFormateado));
+        }
+
+        const probnp = extraerValor(this.texto, EXTRACTION_PATTERNS.cardiacos.probnp);
+        if (probnp) {
+            const probnpFormateado = Number(parseFloat(probnp).toFixed(1)).toString();
+            resultados.push(this.formatearEtiqueta('ProBNP', probnpFormateado));
+        }
+
+        return resultados.join(', ');
+    }
+
+    // ============== HORMONAS ==============
+    extraerHormonas() {
+        let resultados = [];
+
+        const tsh = extraerValor(this.texto, EXTRACTION_PATTERNS.hormonas.tsh);
+        if (tsh) {
+            const tshFormateada = Number(parseFloat(tsh).toFixed(2)).toString();
+            resultados.push(this.formatearEtiqueta('TSH', tshFormateada));
+        }
+
+        const t4l = extraerValor(this.texto, EXTRACTION_PATTERNS.hormonas.t4l);
+        if (t4l) {
+            const t4lFormateada = Number(parseFloat(t4l).toFixed(2)).toString();
+            resultados.push(this.formatearEtiqueta('T4L', t4lFormateada));
+        }
+
+        const bhcg = extraerValor(this.texto, EXTRACTION_PATTERNS.hormonas.bhcg);
+        if (bhcg) {
+            resultados.push(
+                this.formatearEtiqueta('BHCG', this.formatearValorComparativo(bhcg))
+            );
+        }
+
+        return resultados.join(', ');
+    }
+
+    formatearValorComparativo(valor) {
+        const valorLimpio = String(valor).replace(/\s+/g, '').replace(',', '.');
+        const coincidencia = valorLimpio.match(/^([<>]?)(-?\d+(?:\.\d+)?)$/);
+        if (!coincidencia) return valorLimpio;
+
+        return `${coincidencia[1]}${Number(coincidencia[2]).toString()}`;
     }
 
     // ============== EXTRACTOR DE GASES EN SANGRE ==============
-    extraerGases() {
+    extraerGases(opcionesSeleccionadas = []) {
         let resultados = [];
 
-        // 1. pH
+        // 1. pH (2 decimales)
         const ph = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.ph);
         if (ph) {
-            resultados.push(this.formatearEtiqueta('pH', ph));
+            resultados.push(this.formatearEtiqueta('ph', parseFloat(ph).toFixed(2)));
         }
 
-        // 2. PCO2
+        // 2. PCO2 (1 decimal)
         const pco2 = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.pco2);
         if (pco2) {
-            resultados.push(this.formatearEtiqueta('pCO2', pco2));
+            resultados.push(this.formatearEtiqueta('pCO2', parseFloat(pco2).toFixed(1)));
         }
 
-        // 3. HCO3
+        // 3. PO2 (1 decimal)
+        if (opcionesSeleccionadas.includes('GasPO2')) {
+            const po2 = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.po2);
+            if (po2) {
+                resultados.push(this.formatearEtiqueta('pO2', parseFloat(po2).toFixed(1)));
+            }
+        }
+
+        // 4. HCO3 (1 decimal)
         const hco3 = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.hco3);
         if (hco3) {
-            resultados.push(this.formatearEtiqueta('HCO3', hco3));
+            resultados.push(this.formatearEtiqueta('HCO3', parseFloat(hco3).toFixed(1)));
         }
 
-        // 4. SATURACIÓN O2
-        const satO2 = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.saturacion_o2);
-        if (satO2) {
-            resultados.push(this.formatearEtiqueta('SatO2', satO2));
+        // 5. Exceso de base (BEB, 1 decimal)
+        if (opcionesSeleccionadas.includes('GasBEB')) {
+            const beb = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.beb);
+            if (beb) {
+                resultados.push(this.formatearEtiqueta('BEB', parseFloat(beb).toFixed(1)));
+            }
         }
 
-        return this.limpiarAsteriscos(resultados.join(', '));
+        // 6. Ácido láctico (1 decimal)
+        const lactato = extraerValor(this.texto, EXTRACTION_PATTERNS.gases.lactato);
+        if (lactato) {
+            resultados.push(this.formatearEtiqueta('Á.Lac', parseFloat(lactato).toFixed(1)));
+        }
+
+        if (resultados.length === 0) return '';
+
+        let tipoGas = '';
+        if (/GASES\s+SANGRE\s+VENOSA/i.test(this.texto)) {
+            tipoGas = 'GSV';
+        } else if (/GASES\s+SANGRE\s+ARTERIAL/i.test(this.texto)) {
+            tipoGas = 'GSA';
+        }
+
+        const gases = this.limpiarAsteriscos(resultados.join(', '));
+        return tipoGas ? `${tipoGas}: ${gases}` : gases;
     }
 
     // ============== EXTRACTOR DE FECHA ==============
     extraerFecha() {
+        const formatearFecha = (fechaCompleta) => {
+            const partes = fechaCompleta.replace(/-/g, '/').split('/');
+            if (partes.length !== 3) return '';
+
+            const dia = partes[0].padStart(2, '0');
+            const mes = partes[1].padStart(2, '0');
+            let anio = partes[2];
+            if (anio.length === 2) anio = '20' + anio;
+
+            const format = this.formatOptions.dateFormat || 'dd/mm/yyyy';
+            if (format === 'dd/mm') return `${dia}/${mes}:`;
+            if (format === 'dd/mm/yy') return `${dia}/${mes}/${anio.substring(2)}:`;
+            return `${dia}/${mes}/${anio}:`;
+        };
+
+        // En los PDF del HHHA la fecha de nacimiento suele aparecer primero.
+        // La fecha firmada por el responsable corresponde al examen informado.
+        const fechaResponsable = this.texto.match(
+            /Responsable:[^\r\n]*?(\d{2}[/-]\d{2}[/-]\d{4})/i
+        );
+        if (fechaResponsable) {
+            return formatearFecha(fechaResponsable[1]);
+        }
+
         // Probar todos los patrones de fecha
         for (let patron of EXTRACTION_PATTERNS.fechas.patrones) {
             let coincidencia = this.texto.match(patron);
             if (coincidencia) {
-                let fechaCompleta = coincidencia[1];
-                // Normalizar separadores y split
-                const fechaLimpia = fechaCompleta.replace(/-/g, '/');
-                const partes = fechaLimpia.split('/');
-
-                if (partes.length === 3) {
-                    const dia = partes[0].padStart(2, '0');
-                    const mes = partes[1].padStart(2, '0');
-                    let anio = partes[2];
-
-                    // Normalizar a 4 dígitos si viene en 2
-                    if (anio.length === 2) anio = '20' + anio;
-
-                    const format = this.formatOptions.dateFormat || 'dd/mm/yyyy';
-                    let fechaStr = '';
-
-                    if (format === 'dd/mm') {
-                        fechaStr = `${dia}/${mes}`;
-                    } else if (format === 'dd/mm/yy') {
-                        fechaStr = `${dia}/${mes}/${anio.substring(2)}`;
-                    } else {
-                        // Default dd/mm/yyyy
-                        fechaStr = `${dia}/${mes}/${anio}`;
-                    }
-
-                    // Siempre agregar dos puntos para la fecha, independiente de la configuración general
-                    return `${fechaStr}:`;
-                }
-
-                // Fallback: intentar extraer solo dd/mm si el parseo falla pero hubo match
-                return fechaCompleta.substring(0, 5) + ':';
+                return formatearFecha(coincidencia[1]);
             }
         }
         return '';
@@ -500,17 +656,34 @@ class SimpleExtractor {
         // Procesar cada tipo de examen seleccionado en el ORDEN EN QUE LLEGAN (DOM Order)
         let secciones = [];
 
-        // Iterar sobre las opciones seleccionadas para respetar el orden visual
+        // Iterar sobre las opciones seleccionadas para respetar el orden visual.
+        // PCR comparte línea con el hemograma cuando ambos están seleccionados.
         opcionesSeleccionadas.forEach(opcion => {
             if (opcion === 'Hemograma') {
-                const hemograma = this.extraerHemograma(opcionesSeleccionadas);
+                let hemograma = this.extraerHemograma(opcionesSeleccionadas);
+                if (opcionesSeleccionadas.includes('PCR')) {
+                    const pcr = this.extraerPCR();
+                    if (pcr) hemograma = hemograma ? `${hemograma}, ${pcr}` : pcr;
+                }
                 if (hemograma) secciones.push(hemograma);
             } else if (opcion === 'PCR') {
-                const pcr = this.extraerPCR();
-                if (pcr) secciones.push(pcr);
+                if (!opcionesSeleccionadas.includes('Hemograma')) {
+                    const pcr = this.extraerPCR();
+                    if (pcr) secciones.push(pcr);
+                }
             } else if (opcion === 'Renal') {
                 const renal = this.extraerRenal(opcionesSeleccionadas);
                 if (renal) secciones.push(renal);
+
+                const pancreaticos = this.extraerPancreaticos();
+                if (pancreaticos) secciones.push(pancreaticos);
+
+                const glicemiaVaEnNutricional = EXTRACTION_PATTERNS.modelo === 'HHHA'
+                    && opcionesSeleccionadas.includes('Nutricional');
+                if (!glicemiaVaEnNutricional) {
+                    const glicemia = this.extraerGlicemia();
+                    if (glicemia) secciones.push(glicemia);
+                }
             } else if (opcion === 'Hepático' || opcion === 'Hepatico') {
                 const hepatico = this.extraerHepatico();
                 if (hepatico) secciones.push(hepatico);
@@ -518,10 +691,20 @@ class SimpleExtractor {
                 const coagulacion = this.extraerCoagulacion();
                 if (coagulacion) secciones.push(coagulacion);
             } else if (opcion === 'Nutricional') {
-                const nutricional = this.extraerNutricional(opcionesSeleccionadas);
+                const agruparHHHA = EXTRACTION_PATTERNS.modelo === 'HHHA';
+                const nutricional = this.extraerNutricional(
+                    opcionesSeleccionadas,
+                    agruparHHHA
+                );
                 if (nutricional) secciones.push(nutricional);
+            } else if (opcion === 'MarcCV') {
+                const cardiacos = this.extraerCardiacos();
+                if (cardiacos) secciones.push(cardiacos);
+            } else if (opcion === 'Hormonas') {
+                const hormonas = this.extraerHormonas();
+                if (hormonas) secciones.push(hormonas);
             } else if (opcion === 'Gases') {
-                const gases = this.extraerGases();
+                const gases = this.extraerGases(opcionesSeleccionadas);
                 if (gases) secciones.push(gases);
             }
         });
